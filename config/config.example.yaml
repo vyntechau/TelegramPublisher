@@ -1,0 +1,28 @@
+# TelegramPublisher - Infrastructure Bootstrapping Configuration Example
+# Precedence: OS Environment Variables > .env > config.yaml
+
+app:
+  host: "0.0.0.0"
+  port: 8080
+  env: "production"
+  jwt_secret: "change-this-to-a-secure-random-32-byte-secret"
+
+bot:
+  token: "123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+  owner_id: 123456789
+
+database:
+  # Unified connection URL (sqlite, postgres, mysql, mariadb)
+  url: "sqlite://data/publisher.db"
+  
+  # For Postgres:
+  # url: "postgres://postgres:password@localhost:5432/telegram_publisher?sslmode=disable"
+  
+  # For MySQL / MariaDB:
+  # url: "mysql://publisher:password@localhost:3306/telegram_publisher?parseTime=true"
+
+# NOTE: All dynamic operational settings (web_enabled, bot_admin_enabled, mini_app_url,
+# auto_delete_seconds, force_sub_enabled, custom_buttons_json for inline keyboards,
+# AZPays API keys) are stored in the database 'settings' table and managed via the Admin Web Dashboard.
+
+

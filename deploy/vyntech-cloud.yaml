@@ -1,0 +1,41 @@
+# ==========================================
+# VynTech Cloud - Application Manifest
+# ==========================================
+apiVersion: vyntech.cloud/v1alpha1
+kind: Application
+metadata:
+  name: telegram-publisher
+  namespace: sample-apps
+  labels:
+    app.kubernetes.io/name: telegram-publisher
+    app.kubernetes.io/part-of: vyntech-reference-architecture
+spec:
+  replicas: 1
+  image: ghcr.io/vyntechau/telegram-publisher:latest
+  ports:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  env:
+    - name: APP_PORT
+      value: "8080"
+    - name: DATABASE_TYPE
+      value: "postgres"
+    - name: DATABASE_URL
+      value: "postgres://publisher:secret@postgres-cluster.sample-apps.svc.cluster.local:5432/publisher_db?sslmode=disable"
+  secrets:
+    - secretName: telegram-credentials
+      mountPath: /etc/secrets
+  resources:
+    limits:
+      cpu: "100m"
+      memory: "96Mi"
+    requests:
+      cpu: "24m"
+      memory: "48Mi"
+  ingress:
+    enabled: true
+    host: "telegram-publisher.app.onvyn.tech"
+    tls:
+      enabled: true
+      clusterIssuer: letsencrypt-prod

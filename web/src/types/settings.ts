@@ -1,0 +1,41 @@
+export type KeyboardMode = 'inline' | 'persistent' | 'both';
+export type AutoPostFormat = 'teaser_with_button' | 'full_media';
+export type SubscriptionGateway = 'azpays' | 'coinbase' | 'nowpayments';
+
+export interface SettingsMap {
+  web_enabled?: string;
+  admin_web_enabled?: string;
+  bot_admin_enabled?: string;
+  mini_app_enabled?: string;
+  mini_app_url?: string;
+  auto_delete_seconds?: string;
+  force_sub_enabled?: string;
+  copyright_warning_text?: string;
+  bot_token?: string;
+  custom_buttons_json?: string;
+  keyboard_mode?: KeyboardMode | string;
+  show_forward_button?: string;
+  show_report_button?: string;
+  show_reactions?: string;
+  show_mini_app_button?: string;
+  auto_post_enabled?: string;
+  auto_post_channels?: string;
+  auto_post_format?: AutoPostFormat | string;
+  subscription_enabled?: string;
+  subscription_gateway?: SubscriptionGateway | string;
+  subscription_api_key?: string;
+  subscription_secret_key?: string;
+  subscription_callback_url?: string;
+  subscription_success_url?: string;
+  azpays_enabled?: string;
+  azpays_api_key?: string;
+  azpays_secret_key?: string;
+  azpays_callback_url?: string;
+  azpays_success_url?: string;
+  api_url?: string;
+  onboarding_step?: string;
+  onboarding_completed?: string;
+  default_language?: string;
+  supported_languages?: string;
+  [key: string]: string | undefined;
+}

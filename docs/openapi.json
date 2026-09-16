@@ -1,0 +1,130 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TelegramPublisher API",
+    "version": "1.0.0",
+    "description": "Production-grade REST & GraphQL API for TelegramPublisher open-source bot and VynTech Cloud deployment."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local / Staging Server"
+    }
+  ],
+  "paths": {
+    "/api/v1/auth/telegram": {
+      "post": {
+        "summary": "Authenticate with Telegram Mini App initData",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "init_data": { "type": "string" }
+                },
+                "required": ["init_data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "JWT Auth Token & User payload" },
+          "401": { "description": "Invalid Telegram HMAC signature" }
+        }
+      }
+    },
+    "/api/v1/analytics/overview": {
+      "get": {
+        "summary": "Get Executive Analytics & KPI Metrics",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Aggregated analytics summary" }
+        }
+      }
+    },
+    "/api/v1/posts": {
+      "get": {
+        "summary": "List published media posts",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Array of posts" }
+        }
+      },
+      "post": {
+        "summary": "Publish new media post",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Post created" }
+        }
+      }
+    },
+    "/api/v1/posts/react": {
+      "post": {
+        "summary": "Submit like or dislike on post",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "post_id": { "type": "integer" },
+                  "reaction": { "type": "string", "enum": ["like", "dislike"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated post reactions" }
+        }
+      }
+    },
+    "/api/v1/reports": {
+      "get": {
+        "summary": "List broken file reports",
+        "responses": {
+          "200": { "description": "List of tickets" }
+        }
+      },
+      "post": {
+        "summary": "Submit broken file ticket",
+        "responses": {
+          "201": { "description": "Report ticket created" }
+        }
+      }
+    },
+    "/api/v1/marketing/broadcast": {
+      "post": {
+        "summary": "Dispatch marketing broadcast",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Broadcast execution statistics" }
+        }
+      }
+    },
+    "/api/v1/payments/plans": {
+      "get": {
+        "summary": "List AZPays subscription plans",
+        "responses": {
+          "200": { "description": "Available subscription tiers" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

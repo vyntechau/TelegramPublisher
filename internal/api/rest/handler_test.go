@@ -1124,6 +1124,25 @@ func TestSettingsEndpoints(t *testing.T) {
 			t.Errorf("expected 405, got %d", rec.Code)
 		}
 	})
+
+	t.Run("UnauthenticatedSettingsAllowedDuringOnboarding", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", strings.NewReader(`{"test_setting":"value1"}`))
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected 200 during onboarding, got %d", rec.Code)
+		}
+	})
+
+	t.Run("UnauthenticatedSettingsForbiddenAfterOnboardingCompleted", func(t *testing.T) {
+		_ = repo.SetSetting(context.Background(), settings.KeyOnboardingCompleted, "true", "")
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", strings.NewReader(`{"test_setting":"value2"}`))
+		rec := httptest.NewRecorder()
+		mux.ServeHTTP(rec, req)
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("expected 401 after onboarding completed, got %d", rec.Code)
+		}
+	})
 }
 
 func TestPaymentsEndpoints(t *testing.T) {

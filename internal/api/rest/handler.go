@@ -82,8 +82,8 @@ func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/users", s.requireRoleMiddleware(storage.RoleAdmin, storage.RoleOwner)(s.handleUsers))
 	mux.HandleFunc("/api/v1/users/", s.requireRoleMiddleware(storage.RoleAdmin, storage.RoleOwner)(s.handleUserByID))
 
-	// Settings (Admin/Owner only)
-	mux.HandleFunc("/api/v1/settings", s.requireRoleMiddleware(storage.RoleAdmin, storage.RoleOwner)(s.handleSettings))
+	// Settings (Allowed during setup/onboarding; Admin/Owner only when onboarding is completed)
+	mux.HandleFunc("/api/v1/settings", s.requireRoleOrOnboardingMiddleware(storage.RoleAdmin, storage.RoleOwner)(s.handleSettings))
 
 	// Setup Status (Public onboarding check)
 	mux.HandleFunc("/api/v1/setup/status", s.handleSetupStatus)
@@ -147,6 +147,20 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func (s *Server) requireRoleMiddleware(allowedRoles ...string) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return s.authMiddleware(s.requireRole(next, allowedRoles...))
+	}
+}
+
+func (s *Server) requireRoleOrOnboardingMiddleware(allowedRoles ...string) func(http.HandlerFunc) http.HandlerFunc {
+	return func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			isCompleted := s.settingsSvc.GetBool(ctx, settings.KeyOnboardingCompleted, false)
+			if !isCompleted {
+				next(w, r)
+				return
+			}
+			s.requireRoleMiddleware(allowedRoles...)(next)(w, r)
+		}
 	}
 }
 

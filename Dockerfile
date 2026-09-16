@@ -37,16 +37,21 @@ LABEL org.opencontainers.image.title="TelegramPublisher" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.vendor="VynTech AU"
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && \
+    addgroup -g 10001 -S appgroup && \
+    adduser -u 10001 -S appuser -G appgroup
 
 # Copy binary & static assets
-COPY --from=go-builder /app/bin/publisher /app/publisher
-COPY --from=web-builder /app/web/dist /app/web/dist
-COPY config/config.example.yaml /app/config/config.example.yaml
-COPY docs/openapi.json /app/docs/openapi.json
+COPY --from=go-builder --chown=10001:10001 /app/bin/publisher /app/publisher
+COPY --from=web-builder --chown=10001:10001 /app/web/dist /app/web/dist
+COPY --chown=10001:10001 config/config.example.yaml /app/config/config.example.yaml
+COPY --chown=10001:10001 docs/openapi.json /app/docs/openapi.json
 
-# Create persistent data directory
-RUN mkdir -p /app/data
+# Create persistent data directory and ensure non-root ownership
+RUN mkdir -p /app/data && \
+    chown -R 10001:10001 /app
+
+USER 10001:10001
 
 EXPOSE 8080
 

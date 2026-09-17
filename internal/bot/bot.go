@@ -9,6 +9,7 @@ import (
 	"github.com/vyntechau/TelegramPublisher/config"
 	"github.com/vyntechau/TelegramPublisher/internal/auth"
 	"github.com/vyntechau/TelegramPublisher/internal/cleaner"
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/marketing"
 	"github.com/vyntechau/TelegramPublisher/internal/services/payment"
 	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
@@ -136,7 +137,8 @@ func (e *Engine) registerRoutes() {
 	}
 	for _, t := range broadcastTriggers {
 		e.Bot.Handle(t, e.AdminOnly(func(c telebot.Context) error {
-			return c.Send("📢 *Broadcast Announcement*:\nUse `/broadcast <your_message>` to send an update to all active users.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			userLang := e.GetUserLang(c)
+			return c.Send(i18n.T(userLang, "prompt_broadcast"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		}))
 	}
 
@@ -176,7 +178,8 @@ func (e *Engine) registerRoutes() {
 	}
 	for _, t := range uploadTriggers {
 		e.Bot.Handle(t, e.AuthorOnly(func(c telebot.Context) error {
-			return c.Send("📤 *Upload Media*: Send or forward any photo, video, document, or animation to this chat to register a new protected post.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			userLang := e.GetUserLang(c)
+			return c.Send(i18n.T(userLang, "prompt_upload"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		}))
 	}
 

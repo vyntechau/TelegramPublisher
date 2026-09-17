@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/marketing"
 	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
@@ -15,33 +16,48 @@ import (
 // HandleStats returns executive analytics overview.
 func (e *Engine) HandleStats(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	summary, err := e.Repo.GetAnalyticsSummary(ctx)
 	if err != nil {
 		return c.Send(fmt.Sprintf("Error fetching analytics: %v", err))
 	}
 
-	report := fmt.Sprintf("📊 *Executive Analytics & Metrics Report*\n\n"+
-		"👥 *User Growth & Retention:*\n"+
-		"• Total Users: `%d`\n"+
-		"• Daily Active (DAU): `%d`\n"+
-		"• Weekly Active (WAU): `%d`\n"+
-		"• Monthly Active (MAU): `%d`\n"+
-		"• Blocked Bot: `%d`\n"+
-		"• Banned: `%d`\n\n"+
-		"🎬 *Content & Engagement:*\n"+
-		"• Total Posts: `%d`\n"+
-		"• Total Views: `%d`\n"+
-		"• Likes: `👍 %d` | Dislikes: `👎 %d`\n\n"+
-		"🚩 *Broken File Reports:*\n"+
-		"• Pending: `%d` | Resolved: `%d`\n\n"+
-		"💰 *Financial & VIP Subscriptions:*\n"+
-		"• Active VIP Subscribers: `%d`\n"+
-		"• Total Gross Revenue: `$%.2f USDT`\n\n"+
-		"_For visual charts and CSV exports, visit the Web Dashboard._",
-		summary.TotalUsers, summary.ActiveUsersDaily, summary.ActiveUsersWeekly, summary.ActiveUsersMonthly,
-		summary.BlockedUsers, summary.BannedUsers, summary.TotalPosts, summary.TotalViews,
-		summary.TotalLikes, summary.TotalDislikes, summary.PendingReports, summary.ResolvedReports,
-		summary.ActiveSubscribers, summary.TotalRevenueCrypto)
+	report := fmt.Sprintf("%s\n\n"+
+		"%s\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n\n"+
+		"%s\n"+
+		"%s `%d`\n"+
+		"%s `%d`\n"+
+		"%s\n\n"+
+		"%s\n"+
+		"%s\n\n"+
+		"%s\n"+
+		"%s `%d`\n"+
+		"%s `$%.2f USDT`\n\n"+
+		"%s",
+		i18n.T(userLang, "stats_title"),
+		i18n.T(userLang, "stats_sec_users"),
+		i18n.T(userLang, "stats_lbl_total_users"), summary.TotalUsers,
+		i18n.T(userLang, "stats_lbl_dau"), summary.ActiveUsersDaily,
+		i18n.T(userLang, "stats_lbl_wau"), summary.ActiveUsersWeekly,
+		i18n.T(userLang, "stats_lbl_mau"), summary.ActiveUsersMonthly,
+		i18n.T(userLang, "stats_lbl_blocked"), summary.BlockedUsers,
+		i18n.T(userLang, "stats_lbl_banned"), summary.BannedUsers,
+		i18n.T(userLang, "stats_sec_content"),
+		i18n.T(userLang, "stats_lbl_total_posts"), summary.TotalPosts,
+		i18n.T(userLang, "stats_lbl_total_views"), summary.TotalViews,
+		i18n.T(userLang, "stats_lbl_likes_dislikes", summary.TotalLikes, summary.TotalDislikes),
+		i18n.T(userLang, "stats_sec_reports"),
+		i18n.T(userLang, "stats_lbl_reports_pending_resolved", summary.PendingReports, summary.ResolvedReports),
+		i18n.T(userLang, "stats_sec_finance"),
+		i18n.T(userLang, "stats_lbl_active_subscribers"), summary.ActiveSubscribers,
+		i18n.T(userLang, "stats_lbl_total_revenue"), summary.TotalRevenueCrypto,
+		i18n.T(userLang, "stats_footer"))
 
 	return c.Send(report, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
@@ -49,13 +65,14 @@ func (e *Engine) HandleStats(c telebot.Context) error {
 // HandleUsers lists registered users.
 func (e *Engine) HandleUsers(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	users, total, err := e.Repo.ListUsers(ctx, storage.UserFilter{Limit: 15})
 	if err != nil {
 		return c.Send(fmt.Sprintf("Error listing users: %v", err))
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("👥 *Users Directory* (Showing %d of %d)\n\n", len(users), total))
+	sb.WriteString(fmt.Sprintf("%s\n\n", i18n.T(userLang, "admin_users_title", len(users), total)))
 	for _, u := range users {
 		sb.WriteString(fmt.Sprintf("• `%d` | @%s | Role: `%s` | Status: `%s`\n", u.TelegramID, u.Username, u.Role, u.Status))
 	}
@@ -201,17 +218,18 @@ func (e *Engine) HandleDelChannel(c telebot.Context) error {
 // HandleListChannels lists registered force-sub channels.
 func (e *Engine) HandleListChannels(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	channels, err := e.Repo.ListChannels(ctx, false)
 	if err != nil {
 		return c.Send(fmt.Sprintf("Error listing channels: %v", err))
 	}
 
 	if len(channels) == 0 {
-		return c.Send("No force-subscription channels configured.\nUse `/addchannel` to register one.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(i18n.T(userLang, "admin_channels_none"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	}
 
 	var sb strings.Builder
-	sb.WriteString("📢 *Configured Force-Subscription Channels:*\n\n")
+	sb.WriteString(i18n.T(userLang, "admin_channels_title"))
 	for _, ch := range channels {
 		sb.WriteString(fmt.Sprintf("• *%s* (`%d`)\n  Link: %s | Required: `%t`\n", ch.Title, ch.TelegramID, ch.InviteLink, ch.IsRequired))
 	}
@@ -222,35 +240,37 @@ func (e *Engine) HandleListChannels(c telebot.Context) error {
 // HandleListReports lists broken file reports.
 func (e *Engine) HandleListReports(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	reports, total, err := e.Repo.ListReports(ctx, storage.ReportStatusPending, 0, 10, 0)
 	if err != nil {
 		return c.Send(fmt.Sprintf("Error fetching reports: %v", err))
 	}
 
 	if total == 0 {
-		return c.Send("✅ *No Pending Reports!* All media links are working properly.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(i18n.T(userLang, "admin_reports_none"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("🚩 *Pending Broken File Tickets* (%d total)\n\n", total))
+	sb.WriteString(fmt.Sprintf(i18n.T(userLang, "admin_reports_title"), total))
 
 	for _, rep := range reports {
 		sb.WriteString(fmt.Sprintf("• *Ticket #%d* | Post: `%s` | Reason: `%s`\n  FileID: `%s`\n",
 			rep.ID, rep.Post.Slug, rep.Reason, rep.Post.FileID))
 	}
-	sb.WriteString("\n_Manage and resolve tickets directly from the Web Dashboard._")
+	sb.WriteString(i18n.T(userLang, "admin_reports_footer"))
 
 	return c.Send(sb.String(), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 // HandleBroadcastCommand sends a broadcast to all active users.
 func (e *Engine) HandleBroadcastCommand(c telebot.Context) error {
+	userLang := e.GetUserLang(c)
 	content := strings.TrimSpace(c.Data())
 	if content == "" {
 		return c.Send("Usage: `/broadcast <message_content>`\nSupports standard Markdown.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	}
 
-	progressMsg, _ := e.Bot.Send(c.Chat(), "🚀 *Broadcasting in progress...*", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	progressMsg, _ := e.Bot.Send(c.Chat(), i18n.T(userLang, "admin_broadcast_progress"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 
 	ctx := context.Background()
 	res, err := e.MarketSvc.Dispatch(ctx, marketing.BroadcastPayload{
@@ -264,12 +284,7 @@ func (e *Engine) HandleBroadcastCommand(c telebot.Context) error {
 		return c.Send(fmt.Sprintf("Broadcast error: %v", err))
 	}
 
-	summary := fmt.Sprintf("✅ *Broadcast Completed!*\n\n"+
-		"• *Targeted*: `%d`\n"+
-		"• *Delivered*: `%d`\n"+
-		"• *Blocked by User (Flagged in DB)*: `%d`\n"+
-		"• *Failed*: `%d`\n"+
-		"• *Duration*: `%d ms`",
+	summary := fmt.Sprintf(i18n.T(userLang, "admin_broadcast_completed"),
 		res.TotalTargeted, res.TotalSent, res.TotalBlocked, res.TotalFailed, res.DurationMs)
 
 	if progressMsg != nil {
@@ -299,6 +314,7 @@ func (e *Engine) HandleSetTTL(c telebot.Context) error {
 // HandleBotSettingsOverview returns dynamic system runtime settings overview.
 func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	kbMode := e.SettingsSvc.GetString(ctx, settings.KeyKeyboardMode, "both")
 	autoDeleteSec := e.SettingsSvc.GetInt(ctx, settings.KeyAutoDeleteSeconds, 120)
 	forceSubEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyForceSubEnabled, true)
@@ -323,7 +339,7 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 		if token, err := e.AuthSvc.GenerateJWT(user); err == nil {
 			cleanURL := strings.TrimRight(miniAppURL, "/")
 			dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
-			btnOpen := menu.URL("🚀 Open Web Dashboard", dashboardURL)
+			btnOpen := menu.URL(i18n.T(userLang, "btn_open_dashboard"), dashboardURL)
 			menu.Inline(menu.Row(btnOpen))
 		}
 	}
@@ -334,6 +350,7 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 // HandleWebLogin generates an authenticated one-click link and token for the Web Admin Dashboard.
 func (e *Engine) HandleWebLogin(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	user, err := e.Repo.GetUserByTelegramID(ctx, c.Sender().ID)
 	if err != nil {
 		return c.Send("❌ User profile not found. Please send /start first.")
@@ -353,13 +370,10 @@ func (e *Engine) HandleWebLogin(c telebot.Context) error {
 	dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
 
 	menu := &telebot.ReplyMarkup{}
-	btnOpen := menu.URL("🚀 Open Web Admin Dashboard", dashboardURL)
+	btnOpen := menu.URL(i18n.T(userLang, "admin_web_login_btn"), dashboardURL)
 	menu.Inline(menu.Row(btnOpen))
 
-	msg := fmt.Sprintf("🔐 *Web Admin One-Click Login*\n\n"+
-		"Your administrative session has been generated (valid for 7 days).\n\n"+
-		"Tap the button below to open the dashboard with your credentials pre-authenticated, or copy your session token:\n\n"+
-		"🔑 *Session Token:*\n`%s`", token)
+	msg := fmt.Sprintf(i18n.T(userLang, "admin_web_login_title"), token)
 
 	return c.Send(msg, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }

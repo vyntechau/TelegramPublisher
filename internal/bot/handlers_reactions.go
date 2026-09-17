@@ -81,13 +81,13 @@ func (e *Engine) handleReactionCallback(c telebot.Context, action string, parts 
 		PostID:    &postID,
 	})
 
-	// Fetch updated counts
+	userLang := e.GetUserLang(c)
 	post, err := e.Repo.GetPostByID(ctx, postID)
 	if err == nil && post != nil {
 		inlineMarkup := &telebot.ReplyMarkup{}
 		btnLike := inlineMarkup.Data(fmt.Sprintf("👍 %d", post.LikesCount), "react_like", fmt.Sprintf("%d", post.ID))
 		btnDislike := inlineMarkup.Data(fmt.Sprintf("👎 %d", post.DislikesCount), "react_dislike", fmt.Sprintf("%d", post.ID))
-		btnReport := inlineMarkup.Data("🚩 Report Broken", "report_broken", fmt.Sprintf("%d", post.ID))
+		btnReport := inlineMarkup.Data(i18n.T(userLang, "btn_report"), "report_broken", fmt.Sprintf("%d", post.ID))
 
 		inlineMarkup.Inline(
 			inlineMarkup.Row(btnLike, btnDislike),
@@ -96,7 +96,7 @@ func (e *Engine) handleReactionCallback(c telebot.Context, action string, parts 
 		_, _ = e.Bot.EditReplyMarkup(c.Callback().Message, inlineMarkup)
 	}
 
-	return c.Respond(&telebot.CallbackResponse{Text: "Reaction recorded!"})
+	return c.Respond(&telebot.CallbackResponse{Text: i18n.T(userLang, "toast_reaction_recorded")})
 }
 
 func (e *Engine) handleReportBrokenCallback(c telebot.Context, parts []string) error {
@@ -163,6 +163,7 @@ func (e *Engine) handleResolveReportCallback(c telebot.Context, parts []string) 
 	reportID, _ := strconv.ParseInt(parts[1], 10, 64)
 	ctx := context.Background()
 
+	userLang := e.GetUserLang(c)
 	_ = e.Repo.UpdateReportStatus(ctx, reportID, storage.ReportStatusResolved, c.Sender().ID, "Resolved by admin")
-	return c.Respond(&telebot.CallbackResponse{Text: "✅ Report marked as resolved!"})
+	return c.Respond(&telebot.CallbackResponse{Text: i18n.T(userLang, "report_marked_resolved")})
 }

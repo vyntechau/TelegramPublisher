@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
 	"gopkg.in/telebot.v3"
@@ -14,6 +15,7 @@ import (
 // HandleMediaUpload processes media sent by authors/admins and creates a new post with File ID details.
 func (e *Engine) HandleMediaUpload(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	sender := c.Sender()
 
 	var fileID string
@@ -41,7 +43,7 @@ func (e *Engine) HandleMediaUpload(c telebot.Context) error {
 		fileUniqueID = msg.Animation.UniqueID
 		fileType = storage.FileTypeAnimation
 	} else {
-		return c.Send("Unsupported media format.")
+		return c.Send(i18n.T(userLang, "err_unsupported_media"))
 	}
 
 	// Generate clean slug
@@ -77,19 +79,20 @@ func (e *Engine) HandleMediaUpload(c telebot.Context) error {
 	botUsername := e.Bot.Me.Username
 	shareLink := fmt.Sprintf("https://t.me/%s?start=%s", botUsername, slug)
 
-	card := fmt.Sprintf("✅ *Media Uploaded & Registered Successfully!*\n\n"+
+	card := fmt.Sprintf("%s\n\n"+
 		"🔗 *Sharable Link*: `%s`\n\n"+
-		"📋 *File ID Details (For Admins & Authors)*:\n"+
+		"📋 *File ID Details*:\n"+
 		"• *File ID*: `%s`\n"+
 		"• *File Unique ID*: `%s`\n"+
 		"• *Type*: `%s`\n"+
 		"• *Slug*: `%s`\n"+
-		"• *Auto-Delete TTL*: `%d seconds (2 min)`\n\n"+
+		"• *Auto-Delete TTL*: `%d seconds`\n\n"+
 		"Users clicking your link will receive this content protected with auto-delete.",
+		i18n.T(userLang, "media_uploaded_title"),
 		shareLink, fileID, fileUniqueID, fileType, slug, defaultTTL)
 
 	inlineMarkup := &telebot.ReplyMarkup{}
-	btnTest := inlineMarkup.URL("🚀 Test Deep Link", shareLink)
+	btnTest := inlineMarkup.URL(i18n.T(userLang, "btn_test_link"), shareLink)
 	inlineMarkup.Inline(inlineMarkup.Row(btnTest))
 
 	return c.Send(card, inlineMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})

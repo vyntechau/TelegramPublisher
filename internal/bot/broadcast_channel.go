@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
 	"gopkg.in/telebot.v3"
@@ -38,14 +39,16 @@ func (e *Engine) BroadcastPostToChannels(ctx context.Context, post *storage.Post
 	}
 	watchURL := fmt.Sprintf("https://t.me/%s?start=%s", botUsername, post.Slug)
 
+	defaultLang := e.SettingsSvc.GetString(ctx, settings.KeyDefaultLanguage, "en")
+
 	// Build Inline Keyboard for Channel Post
 	inlineMarkup := &telebot.ReplyMarkup{}
-	btnWatch := inlineMarkup.URL("▶️ Watch Full Media", watchURL)
+	btnWatch := inlineMarkup.URL(i18n.T(defaultLang, "btn_watch_media"), watchURL)
 	var rows []telebot.Row
 	rows = append(rows, inlineMarkup.Row(btnWatch))
 
 	if miniAppEnabled && miniAppURL != "" {
-		btnMiniApp := inlineMarkup.WebApp("🚀 Open Mini App", &telebot.WebApp{URL: miniAppURL})
+		btnMiniApp := inlineMarkup.WebApp(i18n.T(defaultLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
 		rows = append(rows, inlineMarkup.Row(btnMiniApp))
 	}
 	inlineMarkup.Inline(rows...)

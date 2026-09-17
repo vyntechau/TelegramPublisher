@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -92,7 +93,8 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 			if e.Bot.Me != nil && e.Bot.Me.Username != "" {
 				botUsername = e.Bot.Me.Username
 			}
-			shareURL := fmt.Sprintf("https://t.me/share/url?url=https://t.me/%s?start=%s&text=Check+out+this+media+on+TelegramPublisher!", botUsername, post.Slug)
+			shareText := url.QueryEscape(i18n.T(userLang, "share_caption"))
+			shareURL := fmt.Sprintf("https://t.me/share/url?url=https://t.me/%s?start=%s&text=%s", botUsername, post.Slug, shareText)
 			btnShare := inlineMarkup.URL(i18n.T(userLang, "btn_share"), shareURL)
 			actionBtns = append(actionBtns, btnShare)
 		}
@@ -432,7 +434,7 @@ func (e *Engine) HandleMyStatus(c telebot.Context) error {
 	userLang := e.GetUserLang(c)
 	user, err := e.Repo.GetUserByTelegramID(ctx, c.Sender().ID)
 	if err != nil {
-		return c.Send("Could not retrieve user status.")
+		return c.Send(i18n.T(userLang, "err_user_status"))
 	}
 
 	sub, _ := e.Repo.GetActiveSubscription(ctx, c.Sender().ID)

@@ -72,7 +72,8 @@ func (e *Engine) AdminOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 		// Check if bot administration is toggled on in database settings table
 		botAdminEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyBotAdminEnabled, true)
 		if !botAdminEnabled {
-			return c.Send("⚙️ *Bot Admin Disabled*: Bot command administration is currently turned off. Please use the Web Dashboard.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			userLang := e.GetUserLang(c)
+			return c.Send(i18n.T(userLang, "err_admin_disabled"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		}
 
 		sender := c.Sender()

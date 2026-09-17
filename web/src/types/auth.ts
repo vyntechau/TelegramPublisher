@@ -28,5 +28,6 @@ export interface AuthContextType {
   setRole: (role: UserRole) => void;
   isLoading: boolean;
   loginWithTelegram: () => Promise<void>;
+  loginWithToken: (token: string) => Promise<boolean>;
   logout: () => void;
 }

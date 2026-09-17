@@ -303,7 +303,7 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 	autoDeleteSec := e.SettingsSvc.GetInt(ctx, settings.KeyAutoDeleteSeconds, 120)
 	forceSubEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyForceSubEnabled, true)
 	miniAppEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyMiniAppEnabled, true)
-	miniAppURL := e.SettingsSvc.GetString(ctx, settings.KeyMiniAppURL, "http://localhost:8080")
+	miniAppURL := e.SettingsSvc.GetString(ctx, settings.KeyMiniAppURL, "http://localhost:3000")
 	autoPostEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyAutoPostEnabled, false)
 	subEnabled := e.SettingsSvc.GetBool(ctx, settings.KeySubscriptionEnabled, true)
 	gateway := e.SettingsSvc.GetString(ctx, settings.KeySubscriptionGateway, "azpays")
@@ -318,6 +318,50 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 		"_To modify keys, update settings from the Web Dashboard._",
 		kbMode, autoDeleteSec, forceSubEnabled, miniAppEnabled, miniAppURL, autoPostEnabled, subEnabled, gateway)
 
-	return c.Send(overview, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	menu := &telebot.ReplyMarkup{}
+	if user, err := e.Repo.GetUserByTelegramID(ctx, c.Sender().ID); err == nil && e.AuthSvc != nil {
+		if token, err := e.AuthSvc.GenerateJWT(user); err == nil {
+			cleanURL := strings.TrimRight(miniAppURL, "/")
+			dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
+			btnOpen := menu.URL("🚀 Open Web Dashboard", dashboardURL)
+			menu.Inline(menu.Row(btnOpen))
+		}
+	}
+
+	return c.Send(overview, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
+
+// HandleWebLogin generates an authenticated one-click link and token for the Web Admin Dashboard.
+func (e *Engine) HandleWebLogin(c telebot.Context) error {
+	ctx := context.Background()
+	user, err := e.Repo.GetUserByTelegramID(ctx, c.Sender().ID)
+	if err != nil {
+		return c.Send("❌ User profile not found. Please send /start first.")
+	}
+
+	if e.AuthSvc == nil {
+		return c.Send("❌ Authentication service unavailable.")
+	}
+
+	token, err := e.AuthSvc.GenerateJWT(user)
+	if err != nil {
+		return c.Send(fmt.Sprintf("❌ Failed to generate session token: %v", err))
+	}
+
+	webURL := e.SettingsSvc.GetString(ctx, settings.KeyMiniAppURL, "http://localhost:3000")
+	cleanURL := strings.TrimRight(webURL, "/")
+	dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
+
+	menu := &telebot.ReplyMarkup{}
+	btnOpen := menu.URL("🚀 Open Web Admin Dashboard", dashboardURL)
+	menu.Inline(menu.Row(btnOpen))
+
+	msg := fmt.Sprintf("🔐 *Web Admin One-Click Login*\n\n"+
+		"Your administrative session has been generated (valid for 7 days).\n\n"+
+		"Tap the button below to open the dashboard with your credentials pre-authenticated, or copy your session token:\n\n"+
+		"🔑 *Session Token:*\n`%s`", token)
+
+	return c.Send(msg, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+}
+
 

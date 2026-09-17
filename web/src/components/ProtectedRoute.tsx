@@ -1,9 +1,10 @@
-import React from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ShieldAlert, ArrowLeft, Lock, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Lock, Sparkles, CheckCircle2, Send, KeyRound } from 'lucide-react';
 import { VynTechLogo } from './VynTechLogo';
+import { TelegramLoginModal } from './auth/TelegramLoginModal';
 
 interface ProtectedRouteProps {
   allowedRoles: Array<'user' | 'author' | 'admin' | 'owner'>;
@@ -11,8 +12,9 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, children }) => {
-  const { role, setRole, isLoading } = useAuth();
+  const { role, setRole, isLoading, token } = useAuth();
   const { t } = useTranslation();
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
 
   if (isLoading) {
     return (
@@ -27,6 +29,64 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
     );
   }
 
+  // 1. Not logged in (no token) -> Show Login Required prompt
+  if (!token) {
+    return (
+      <>
+        <div className="flex items-center justify-center min-h-[70vh] px-4">
+          <div className="liquid-glass-card max-w-lg w-full p-8 md:p-10 rounded-3xl border border-cyan-500/30 text-center relative overflow-hidden shadow-2xl">
+            {/* Ambient Glow */}
+            <div className="ambient-orb w-64 h-64 bg-[#229ED9]/15 -top-20 -right-20 pointer-events-none" />
+            <div className="ambient-orb w-64 h-64 bg-indigo-600/10 -bottom-20 -left-20 pointer-events-none" />
+
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#229ED9]/25 to-cyan-500/15 border border-[#229ED9]/40 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-[#229ED9]/15">
+              <Send size={28} className="text-[#229ED9] fill-[#229ED9] -rotate-12 translate-x-0.5" />
+            </div>
+
+            <h2 className="text-2xl font-black text-white mb-2 tracking-tight">
+              {t('auth.login_required_title', 'Telegram Login Required')}
+            </h2>
+            <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+              {t('auth.login_required_desc', 'You are accessing this operational page from a web browser. Please sign in with your Telegram account to verify your permissions.')}
+            </p>
+
+            <div className="space-y-3 mb-6">
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="liquid-button bg-[#229ED9] hover:bg-[#1e8ec3] inline-flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-bold text-white shadow-xl shadow-[#229ED9]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <Send size={16} className="fill-white -rotate-12" />
+                <span>{t('auth.login_with_telegram', 'Login with Telegram')}</span>
+              </button>
+
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <KeyRound size={13} className="text-amber-400" />
+                <span>{t('auth.enter_token', 'Have a Session Token? Paste Here')}</span>
+              </button>
+            </div>
+
+            <Link
+              to="/catalog"
+              className="inline-flex items-center justify-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft size={14} className="rtl:rotate-180" />
+              <span>{t('auth.return_catalog', 'Return to Media Catalog')}</span>
+            </Link>
+          </div>
+        </div>
+
+        <TelegramLoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+        />
+      </>
+    );
+  }
+
+  // 2. Logged in, but role is insufficient
   const isAuthorized = allowedRoles.includes(role);
 
   if (!isAuthorized) {
@@ -37,12 +97,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
           <div className="ambient-orb w-64 h-64 bg-red-600/15 -top-20 -right-20 pointer-events-none" />
           <div className="ambient-orb w-64 h-64 bg-blue-600/10 -bottom-20 -left-20 pointer-events-none" />
 
-          {/* VynTech Logo Badge */}
           <div className="flex justify-center mb-6">
             <VynTechLogo size="sm" showWordmark={false} />
           </div>
 
-          {/* Shield Icon */}
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-500/20 via-orange-500/10 to-red-500/5 border border-red-500/30 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-red-500/10">
             <ShieldAlert size={32} className="text-red-400 animate-pulse" />
           </div>
@@ -86,7 +144,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles, ch
             </div>
           </div>
 
-          {/* Return Home Button */}
           <Link
             to="/catalog"
             className="liquid-button inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white shadow-lg"

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vyntechau/TelegramPublisher/config"
+	"github.com/vyntechau/TelegramPublisher/internal/auth"
 	"github.com/vyntechau/TelegramPublisher/internal/cleaner"
 	"github.com/vyntechau/TelegramPublisher/internal/services/marketing"
 	"github.com/vyntechau/TelegramPublisher/internal/services/payment"
@@ -24,6 +25,7 @@ type Engine struct {
 	SettingsSvc *settings.Service
 	MarketSvc   *marketing.Service
 	PaySvc      *payment.Service
+	AuthSvc     *auth.Service
 	userLangs   sync.Map
 }
 
@@ -46,6 +48,7 @@ func NewEngine(cfg *config.Config, repo storage.Repository) (*Engine, error) {
 	settingsService := settings.NewService(repo, cfg)
 	marketService := marketing.NewService(b, repo)
 	payService := payment.NewService(repo, settingsService, b)
+	authService := auth.NewService(cfg.Bot.Token, cfg.App.JWTSecret, repo)
 
 	engine := &Engine{
 		Bot:         b,
@@ -55,6 +58,7 @@ func NewEngine(cfg *config.Config, repo storage.Repository) (*Engine, error) {
 		SettingsSvc: settingsService,
 		MarketSvc:   marketService,
 		PaySvc:      payService,
+		AuthSvc:     authService,
 	}
 
 	engine.registerRoutes()
@@ -83,6 +87,8 @@ func (e *Engine) registerRoutes() {
 	e.Bot.Handle("/help", e.HandleHelp)
 	e.Bot.Handle("/menu", e.sendPersistentKeyboard)
 	e.Bot.Handle("/admin", e.AdminOnly(e.HandleBotSettingsOverview))
+	e.Bot.Handle("/web", e.AdminOnly(e.HandleWebLogin))
+	e.Bot.Handle("/login", e.AdminOnly(e.HandleWebLogin))
 	e.Bot.Handle("/subscribe", e.HandleSubscribe)
 	e.Bot.Handle("/plans", e.HandleSubscribe)
 	e.Bot.Handle("/mystatus", e.HandleMyStatus)

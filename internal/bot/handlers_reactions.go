@@ -28,9 +28,9 @@ func (e *Engine) HandleCallbackQuery(c telebot.Context) error {
 		kbMode := strings.ToLower(e.SettingsSvc.GetString(context.Background(), settings.KeyKeyboardMode, "both"))
 		if kbMode == "persistent" || kbMode == "both" {
 			replyMarkup := e.getRolePersistentKeyboard(c)
-			return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), replyMarkup, telebot.ModeMarkdown)
 		}
-		return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), telebot.ModeMarkdown)
 	case action == "cmd_language":
 		return e.HandleLanguage(c)
 	case action == "react_like" || action == "react_dislike":
@@ -119,7 +119,7 @@ func (e *Engine) handleReportBrokenCallback(c telebot.Context, parts []string) e
 		markup.Row(btnCancel),
 	)
 
-	return c.Send(i18n.T(userLang, "report_title"), markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(i18n.T(userLang, "report_title"), markup, telebot.ModeMarkdown)
 }
 
 func (e *Engine) handleSubmitReportReason(c telebot.Context, parts []string) error {

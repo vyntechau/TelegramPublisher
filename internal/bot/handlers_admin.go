@@ -344,7 +344,7 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 		}
 	}
 
-	return c.Send(overview, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(overview, menu, telebot.ModeMarkdown)
 }
 
 // HandleWebLogin generates an authenticated one-click link and token for the Web Admin Dashboard.
@@ -375,7 +375,7 @@ func (e *Engine) HandleWebLogin(c telebot.Context) error {
 
 	msg := fmt.Sprintf(i18n.T(userLang, "admin_web_login_title"), token)
 
-	return c.Send(msg, menu, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(msg, menu, telebot.ModeMarkdown)
 }
 
 

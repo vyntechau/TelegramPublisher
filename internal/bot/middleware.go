@@ -42,7 +42,7 @@ func (e *Engine) UserMiddleware(next telebot.HandlerFunc) telebot.HandlerFunc {
 			// Check if banned
 			if existing.Status == storage.StatusBanned {
 				userLang := e.GetUserLang(c)
-				return c.Send(i18n.T(userLang, "err_banned"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+				return c.Send(i18n.T(userLang, "err_banned"), telebot.ModeMarkdown)
 			}
 
 			// If owner role needs sync
@@ -73,7 +73,7 @@ func (e *Engine) AdminOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 		botAdminEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyBotAdminEnabled, true)
 		if !botAdminEnabled {
 			userLang := e.GetUserLang(c)
-			return c.Send(i18n.T(userLang, "err_admin_disabled"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			return c.Send(i18n.T(userLang, "err_admin_disabled"), telebot.ModeMarkdown)
 		}
 
 		sender := c.Sender()
@@ -88,7 +88,7 @@ func (e *Engine) AdminOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 		user, err := e.Repo.GetUserByTelegramID(ctx, sender.ID)
 		if err != nil || (user.Role != storage.RoleAdmin && user.Role != storage.RoleOwner) {
 			userLang := e.GetUserLang(c)
-			return c.Send(i18n.T(userLang, "err_unauthorized"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			return c.Send(i18n.T(userLang, "err_unauthorized"), telebot.ModeMarkdown)
 		}
 
 		return next(c)
@@ -116,7 +116,7 @@ func (e *Engine) AuthorOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 				return next(c)
 			}
 			userLang := e.GetUserLang(c)
-			return c.Send(i18n.T(userLang, "err_author_required"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			return c.Send(i18n.T(userLang, "err_author_required"), telebot.ModeMarkdown)
 		}
 
 		return next(c)

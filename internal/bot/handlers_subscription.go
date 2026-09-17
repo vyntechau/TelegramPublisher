@@ -29,7 +29,7 @@ func (e *Engine) HandleSubscribe(c telebot.Context) error {
 		i18n.T(userLang, "sub_select_plan"),
 	)
 
-	return c.Send(text, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(text, markup, telebot.ModeMarkdown)
 }
 
 func (e *Engine) handleBuyPlanCallback(c telebot.Context, parts []string) error {
@@ -60,5 +60,5 @@ func (e *Engine) handleBuyPlanCallback(c telebot.Context, parts []string) error 
 		i18n.T(userLang, "invoice_expires_label"), invoice.ExpiresAt.Format("2006-01-02 15:04"),
 		i18n.T(userLang, "invoice_desc"))
 
-	return c.Send(msg, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(msg, markup, telebot.ModeMarkdown)
 }

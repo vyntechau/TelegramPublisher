@@ -46,7 +46,7 @@ func (e *Engine) sendForceSubGate(c telebot.Context, slug string, unjoined []*st
 
 	msg := fmt.Sprintf("%s\n\n%s", i18n.T(userLang, "fsub_required"), i18n.T(userLang, "fsub_desc"))
 
-	return c.Send(msg, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(msg, markup, telebot.ModeMarkdown)
 }
 
 func (e *Engine) handleFSubCheckCallback(c telebot.Context, parts []string) error {

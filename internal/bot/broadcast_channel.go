@@ -48,8 +48,13 @@ func (e *Engine) BroadcastPostToChannels(ctx context.Context, post *storage.Post
 	rows = append(rows, inlineMarkup.Row(btnWatch))
 
 	if miniAppEnabled && miniAppURL != "" {
-		btnMiniApp := inlineMarkup.WebApp(i18n.T(defaultLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-		rows = append(rows, inlineMarkup.Row(btnMiniApp))
+		if strings.HasPrefix(miniAppURL, "https://") {
+			btnMiniApp := inlineMarkup.WebApp(i18n.T(defaultLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+			rows = append(rows, inlineMarkup.Row(btnMiniApp))
+		} else {
+			btnMiniApp := inlineMarkup.URL(i18n.T(defaultLang, "btn_mini_app"), miniAppURL)
+			rows = append(rows, inlineMarkup.Row(btnMiniApp))
+		}
 	}
 	inlineMarkup.Inline(rows...)
 
@@ -97,7 +102,7 @@ func (e *Engine) BroadcastPostToChannels(ctx context.Context, post *storage.Post
 					"⏳ <b>Copyright Protection</b>: Media auto-purges in 2 minutes after delivery.\n\n"+
 					"👇 <i>Click below to watch the full media in our bot:</i>",
 					escapeHTML(post.Caption))
-				_, sendErr = e.Bot.Send(recipient, teaserText, inlineMarkup, &telebot.SendOptions{ParseMode: telebot.ModeHTML})
+				_, sendErr = e.Bot.Send(recipient, teaserText, inlineMarkup, telebot.ModeHTML)
 			}
 
 			if sendErr != nil {

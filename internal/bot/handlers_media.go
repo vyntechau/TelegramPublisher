@@ -95,5 +95,5 @@ func (e *Engine) HandleMediaUpload(c telebot.Context) error {
 	btnTest := inlineMarkup.URL(i18n.T(userLang, "btn_test_link"), shareLink)
 	inlineMarkup.Inline(inlineMarkup.Row(btnTest))
 
-	return c.Send(card, inlineMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(card, inlineMarkup, telebot.ModeMarkdown)
 }

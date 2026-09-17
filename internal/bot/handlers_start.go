@@ -44,7 +44,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	post, err := e.Repo.GetPostBySlug(ctx, slug)
 	if err != nil {
 		userLang := e.GetUserLang(c)
-		return c.Send(i18n.T(userLang, "post_not_found"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(i18n.T(userLang, "post_not_found"), telebot.ModeMarkdown)
 	}
 
 	// 3. Track View
@@ -104,8 +104,13 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 
 		// Row 3: Open in Mini App
 		if showMiniApp && miniAppEnabled && miniAppURL != "" {
-			btnMiniApp := inlineMarkup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-			inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
+			if strings.HasPrefix(miniAppURL, "https://") {
+				btnMiniApp := inlineMarkup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+				inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
+			} else {
+				btnMiniApp := inlineMarkup.URL(i18n.T(userLang, "btn_mini_app"), miniAppURL)
+				inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
+			}
 		}
 
 		if len(inlineRows) > 0 {
@@ -146,7 +151,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	}
 
 	if sendErr != nil {
-		return c.Send(fmt.Sprintf("⚠️ *Error delivering media*: %v", sendErr), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(fmt.Sprintf("⚠️ *Error delivering media*: %v", sendErr), telebot.ModeMarkdown)
 	}
 
 	// If persistent keyboard mode is active, send or refresh persistent bottom keyboard
@@ -167,7 +172,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 		if warningText != "" {
 			fullWarning = fmt.Sprintf("%s\n%s", warningText, countdown)
 		}
-		timerMsg, err := e.Bot.Send(c.Chat(), fullWarning, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		timerMsg, err := e.Bot.Send(c.Chat(), fullWarning, telebot.ModeMarkdown)
 		if err == nil && timerMsg != nil {
 			e.Cleaner.Schedule(c.Chat().ID, []int{sentMsg.ID, timerMsg.ID}, time.Duration(ttl)*time.Second)
 		} else {
@@ -215,7 +220,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 	switch role {
 	case storage.RoleOwner, storage.RoleAdmin:
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" {
+		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_analytics")))
@@ -251,7 +256,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 
 	case storage.RoleAuthor:
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" {
+		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_upload")))
@@ -275,7 +280,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 
 	default: // Regular User
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" {
+		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_vip_sub")))
@@ -305,7 +310,7 @@ func (e *Engine) sendPersistentKeyboard(c telebot.Context) error {
 	replyMarkup := e.getRolePersistentKeyboard(c)
 	userLang := e.GetUserLang(c)
 	prompt := fmt.Sprintf("⌨️ %s", i18n.T(userLang, "welcome_fast_delivery"))
-	return c.Send(prompt, replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(prompt, replyMarkup, telebot.ModeMarkdown)
 }
 
 func (e *Engine) GetUserLang(c telebot.Context) string {
@@ -371,7 +376,7 @@ func (e *Engine) HandleLanguage(c telebot.Context) error {
 
 	markup.Inline(rows...)
 	prompt := i18n.T(userLang, "lang_select_prompt")
-	return c.Send(prompt, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(prompt, markup, telebot.ModeMarkdown)
 }
 
 func (e *Engine) sendWelcomeMenu(c telebot.Context) error {
@@ -385,8 +390,13 @@ func (e *Engine) sendWelcomeMenu(c telebot.Context) error {
 	var rows []telebot.Row
 
 	if miniAppEnabled && miniAppURL != "" {
-		btnMiniApp := markup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-		rows = append(rows, markup.Row(btnMiniApp))
+		if strings.HasPrefix(miniAppURL, "https://") {
+			btnMiniApp := markup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+			rows = append(rows, markup.Row(btnMiniApp))
+		} else {
+			btnMiniApp := markup.URL(i18n.T(userLang, "btn_mini_app"), miniAppURL)
+			rows = append(rows, markup.Row(btnMiniApp))
+		}
 	}
 
 	btnSub := markup.Data(i18n.T(userLang, "btn_vip_sub"), "cmd_subscribe")
@@ -410,12 +420,18 @@ func (e *Engine) sendWelcomeMenu(c telebot.Context) error {
 		i18n.T(userLang, "welcome_desc"),
 	)
 
-	if kbMode == "persistent" || kbMode == "both" {
+	switch kbMode {
+	case "persistent":
 		replyMarkup := e.getRolePersistentKeyboard(c)
-		return c.Send(welcomeText, markup, replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		return c.Send(welcomeText, replyMarkup, telebot.ModeMarkdown)
+	case "both":
+		if err := c.Send(welcomeText, markup, telebot.ModeMarkdown); err != nil {
+			return err
+		}
+		return e.sendPersistentKeyboard(c)
+	default: // "inline"
+		return c.Send(welcomeText, markup, telebot.ModeMarkdown)
 	}
-
-	return c.Send(welcomeText, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (e *Engine) HandleHelp(c telebot.Context) error {
@@ -426,7 +442,7 @@ func (e *Engine) HandleHelp(c telebot.Context) error {
 		i18n.T(userLang, "help_admin_cmds"),
 	)
 
-	return c.Send(helpText, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(helpText, telebot.ModeMarkdown)
 }
 
 func (e *Engine) HandleMyStatus(c telebot.Context) error {
@@ -458,5 +474,5 @@ func (e *Engine) HandleMyStatus(c telebot.Context) error {
 		i18n.T(userLang, "profile_vip_sub"), vipStatus,
 		i18n.T(userLang, "profile_member_since"), user.CreatedAt.Format("2006-01-02"))
 
-	return c.Send(text, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(text, telebot.ModeMarkdown)
 }

@@ -339,12 +339,17 @@ func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
 		if token, err := e.AuthSvc.GenerateJWT(user); err == nil {
 			cleanURL := strings.TrimRight(miniAppURL, "/")
 			dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
-			btnOpen := menu.URL(i18n.T(userLang, "btn_open_dashboard"), dashboardURL)
-			menu.Inline(menu.Row(btnOpen))
+			if isValidPublicURL(dashboardURL, false) {
+				btnOpen := menu.URL(i18n.T(userLang, "btn_open_dashboard"), dashboardURL)
+				menu.Inline(menu.Row(btnOpen))
+			}
 		}
 	}
 
-	return c.Send(overview, menu, telebot.ModeMarkdown)
+	if len(menu.InlineKeyboard) > 0 {
+		return c.Send(overview, menu, telebot.ModeMarkdown)
+	}
+	return c.Send(overview, telebot.ModeMarkdown)
 }
 
 // HandleWebLogin generates an authenticated one-click link and token for the Web Admin Dashboard.
@@ -370,12 +375,20 @@ func (e *Engine) HandleWebLogin(c telebot.Context) error {
 	dashboardURL := fmt.Sprintf("%s/admin?token=%s", cleanURL, token)
 
 	menu := &telebot.ReplyMarkup{}
-	btnOpen := menu.URL(i18n.T(userLang, "admin_web_login_btn"), dashboardURL)
-	menu.Inline(menu.Row(btnOpen))
+	if isValidPublicURL(dashboardURL, false) {
+		btnOpen := menu.URL(i18n.T(userLang, "admin_web_login_btn"), dashboardURL)
+		menu.Inline(menu.Row(btnOpen))
+	}
 
 	msg := fmt.Sprintf(i18n.T(userLang, "admin_web_login_title"), token)
+	if !isValidPublicURL(dashboardURL, false) {
+		msg += fmt.Sprintf("\n\n🔗 *Dashboard URL:* `%s`", dashboardURL)
+	}
 
-	return c.Send(msg, menu, telebot.ModeMarkdown)
+	if len(menu.InlineKeyboard) > 0 {
+		return c.Send(msg, menu, telebot.ModeMarkdown)
+	}
+	return c.Send(msg, telebot.ModeMarkdown)
 }
 
 

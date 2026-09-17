@@ -47,14 +47,9 @@ func (e *Engine) BroadcastPostToChannels(ctx context.Context, post *storage.Post
 	var rows []telebot.Row
 	rows = append(rows, inlineMarkup.Row(btnWatch))
 
-	if miniAppEnabled && miniAppURL != "" {
-		if strings.HasPrefix(miniAppURL, "https://") {
-			btnMiniApp := inlineMarkup.WebApp(i18n.T(defaultLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-			rows = append(rows, inlineMarkup.Row(btnMiniApp))
-		} else {
-			btnMiniApp := inlineMarkup.URL(i18n.T(defaultLang, "btn_mini_app"), miniAppURL)
-			rows = append(rows, inlineMarkup.Row(btnMiniApp))
-		}
+	if miniAppEnabled && isValidPublicURL(miniAppURL, true) {
+		btnMiniApp := inlineMarkup.WebApp(i18n.T(defaultLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+		rows = append(rows, inlineMarkup.Row(btnMiniApp))
 	}
 	inlineMarkup.Inline(rows...)
 

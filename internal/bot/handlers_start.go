@@ -103,14 +103,9 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 		}
 
 		// Row 3: Open in Mini App
-		if showMiniApp && miniAppEnabled && miniAppURL != "" {
-			if strings.HasPrefix(miniAppURL, "https://") {
-				btnMiniApp := inlineMarkup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-				inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
-			} else {
-				btnMiniApp := inlineMarkup.URL(i18n.T(userLang, "btn_mini_app"), miniAppURL)
-				inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
-			}
+		if showMiniApp && miniAppEnabled && isValidPublicURL(miniAppURL, true) {
+			btnMiniApp := inlineMarkup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+			inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
 		}
 
 		if len(inlineRows) > 0 {
@@ -220,7 +215,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 	switch role {
 	case storage.RoleOwner, storage.RoleAdmin:
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
+		if miniAppEnabled && isValidPublicURL(miniAppURL, true) {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_analytics")))
@@ -256,7 +251,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 
 	case storage.RoleAuthor:
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
+		if miniAppEnabled && isValidPublicURL(miniAppURL, true) {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_upload")))
@@ -280,7 +275,7 @@ func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMark
 
 	default: // Regular User
 		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" && strings.HasPrefix(miniAppURL, "https://") {
+		if miniAppEnabled && isValidPublicURL(miniAppURL, true) {
 			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
 		}
 		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_vip_sub")))
@@ -389,14 +384,9 @@ func (e *Engine) sendWelcomeMenu(c telebot.Context) error {
 	markup := &telebot.ReplyMarkup{}
 	var rows []telebot.Row
 
-	if miniAppEnabled && miniAppURL != "" {
-		if strings.HasPrefix(miniAppURL, "https://") {
-			btnMiniApp := markup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
-			rows = append(rows, markup.Row(btnMiniApp))
-		} else {
-			btnMiniApp := markup.URL(i18n.T(userLang, "btn_mini_app"), miniAppURL)
-			rows = append(rows, markup.Row(btnMiniApp))
-		}
+	if miniAppEnabled && isValidPublicURL(miniAppURL, true) {
+		btnMiniApp := markup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
+		rows = append(rows, markup.Row(btnMiniApp))
 	}
 
 	btnSub := markup.Data(i18n.T(userLang, "btn_vip_sub"), "cmd_subscribe")

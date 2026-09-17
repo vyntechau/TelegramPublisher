@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Channel } from '../../types';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { Send, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -22,7 +22,7 @@ export const AdminChannelsTab: React.FC<AdminChannelsTabProps> = ({ channels, on
 
     try {
       setIsSubmitting(true);
-      await fetch(API_ENDPOINTS.CHANNELS, {
+      await fetch(apiUrl(API_ENDPOINTS.CHANNELS), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export const AdminChannelsTab: React.FC<AdminChannelsTabProps> = ({ channels, on
 
   const handleRemoveChannel = async (id: number) => {
     try {
-      await fetch(`${API_ENDPOINTS.CHANNELS}/${id}`, {
+      await fetch(apiUrl(`${API_ENDPOINTS.CHANNELS}/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('tp_token')}`,

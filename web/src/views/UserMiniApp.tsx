@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS, apiUrl } from '../constants';
 import { Post } from '../types';
 import { useTranslation } from '../context/LanguageContext';
 import { MediaCard } from '../components/media/MediaCard';
@@ -25,7 +25,7 @@ export const UserMiniApp: React.FC = () => {
   const fetchPosts = async () => {
     try {
       setIsLoading(true);
-      const resp = await fetch(`${API_ENDPOINTS.POSTS}?limit=30`);
+      const resp = await fetch(apiUrl(`${API_ENDPOINTS.POSTS}?limit=30`));
       if (resp.ok) {
         const data = await resp.json();
         const list: Post[] = data.posts || [];
@@ -62,7 +62,7 @@ export const UserMiniApp: React.FC = () => {
 
   const handleReaction = async (postId: number, reaction: 'like' | 'dislike') => {
     try {
-      const resp = await fetch(API_ENDPOINTS.POST_REACT, {
+      const resp = await fetch(apiUrl(API_ENDPOINTS.POST_REACT), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

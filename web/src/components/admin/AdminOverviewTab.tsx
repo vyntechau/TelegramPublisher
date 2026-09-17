@@ -1,7 +1,7 @@
 import React from 'react';
 import { AnalyticsSummary } from '../../types';
 import { StatCard } from '../common/StatCard';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { Users, Crown, Eye, AlertCircle, DollarSign, Download, RefreshCw, Sparkles, Shield } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -37,7 +37,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ summary, isL
           </button>
 
           <a
-            href={API_ENDPOINTS.ANALYTICS_EXPORT_USERS}
+            href={apiUrl(API_ENDPOINTS.ANALYTICS_EXPORT_USERS)}
             target="_blank"
             rel="noreferrer"
             className="liquid-pill px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 transition-all"
@@ -47,7 +47,7 @@ export const AdminOverviewTab: React.FC<AdminOverviewTabProps> = ({ summary, isL
           </a>
 
           <a
-            href={API_ENDPOINTS.ANALYTICS_EXPORT_POSTS}
+            href={apiUrl(API_ENDPOINTS.ANALYTICS_EXPORT_POSTS)}
             target="_blank"
             rel="noreferrer"
             className="liquid-pill px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 hover:text-white flex items-center gap-1.5 transition-all"

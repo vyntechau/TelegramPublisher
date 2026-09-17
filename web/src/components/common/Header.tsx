@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
 import { VynTechLogo } from '../VynTechLogo';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { LanguageSelector } from './LanguageSelector';
 import { BookOpen, Terminal } from 'lucide-react';
 
@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
           {/* Interactive Docs */}
           <div className="hidden md:flex items-center gap-2 text-xs">
             <a 
-              href={API_ENDPOINTS.DOCS_SCALAR}
+              href={apiUrl(API_ENDPOINTS.DOCS_SCALAR)}
               target="_blank" 
               rel="noreferrer"
               className="liquid-pill px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-medium flex items-center gap-1.5 text-xs transition-all hover:scale-105"
@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
               <span>{t('nav.scalar_api', 'Scalar API')}</span>
             </a>
             <a 
-              href={API_ENDPOINTS.GRAPHQL_PLAYGROUND}
+              href={apiUrl(API_ENDPOINTS.GRAPHQL_PLAYGROUND)}
               target="_blank" 
               rel="noreferrer"
               className="liquid-pill px-3 py-1.5 rounded-xl text-slate-300 hover:text-white font-medium flex items-center gap-1.5 text-xs transition-all hover:scale-105"

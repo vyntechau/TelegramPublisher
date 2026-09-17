@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS, apiUrl } from '../constants';
 
 interface SetupGuardProps {
   children: React.ReactNode;
@@ -36,7 +36,7 @@ export const SetupGuard: React.FC<SetupGuardProps> = ({ children }) => {
 
     const checkSetupStatus = async () => {
       try {
-        const resp = await fetch(API_ENDPOINTS.SETUP_STATUS);
+        const resp = await fetch(apiUrl(API_ENDPOINTS.SETUP_STATUS));
         if (resp.ok) {
           const data = await resp.json();
           if (data.completed) {

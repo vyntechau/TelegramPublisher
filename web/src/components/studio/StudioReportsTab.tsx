@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Report } from '../../types';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { Clock, RefreshCw } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -17,7 +17,7 @@ export const StudioReportsTab: React.FC<StudioReportsTabProps> = ({ reports, onR
   const handleResolve = async (reportId: number) => {
     try {
       setResolvingId(reportId);
-      await fetch(`${API_ENDPOINTS.REPORTS}/${reportId}`, {
+      await fetch(apiUrl(`${API_ENDPOINTS.REPORTS}/${reportId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

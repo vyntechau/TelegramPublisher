@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { Upload, RefreshCw } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -27,7 +27,7 @@ export const StudioUploadTab: React.FC<StudioUploadTabProps> = ({ onSuccess }) =
 
     try {
       const autoSlug = slug || 'p_' + Math.random().toString(36).substring(2, 9);
-      const resp = await fetch(API_ENDPOINTS.POSTS, {
+      const resp = await fetch(apiUrl(API_ENDPOINTS.POSTS), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

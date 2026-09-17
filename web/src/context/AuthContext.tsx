@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Subscription, UserRole, AuthContextType } from '../types';
-import { API_ENDPOINTS } from '../constants';
+import { API_ENDPOINTS, apiUrl } from '../constants';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const tg = (window as any).Telegram?.WebApp;
       const initData = tg?.initData || '';
 
-      const resp = await fetch(API_ENDPOINTS.AUTH_TELEGRAM, {
+      const resp = await fetch(apiUrl(API_ENDPOINTS.AUTH_TELEGRAM), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ init_data: initData }),

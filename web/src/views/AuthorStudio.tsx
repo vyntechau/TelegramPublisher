@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { STUDIO_TABS, API_ENDPOINTS } from '../constants';
+import { STUDIO_TABS, API_ENDPOINTS, apiUrl } from '../constants';
 import { useTranslation } from '../context/LanguageContext';
 import { Post, Report } from '../types';
 import { StudioPostsTab } from '../components/studio/StudioPostsTab';
@@ -21,8 +21,8 @@ export const AuthorStudio: React.FC = () => {
     try {
       setIsLoading(true);
       const [pResp, rResp] = await Promise.all([
-        fetch(`${API_ENDPOINTS.POSTS}?limit=50`),
-        fetch(`${API_ENDPOINTS.REPORTS}?status=pending`),
+        fetch(apiUrl(`${API_ENDPOINTS.POSTS}?limit=50`)),
+        fetch(apiUrl(`${API_ENDPOINTS.REPORTS}?status=pending`)),
       ]);
 
       if (pResp.ok) {
@@ -42,7 +42,7 @@ export const AuthorStudio: React.FC = () => {
 
   const handleDeletePost = async (id: number) => {
     try {
-      await fetch(`${API_ENDPOINTS.POSTS}/${id}`, {
+      await fetch(apiUrl(`${API_ENDPOINTS.POSTS}/${id}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('tp_token')}`,

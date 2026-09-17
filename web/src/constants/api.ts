@@ -1,3 +1,20 @@
+/**
+ * apiUrl() always returns just the endpoint path (relative URL).
+ *
+ * The api_url setting is a BACKEND config value (used for webhooks, deep links,
+ * Telegram WebApp URLs, etc.) — it should never be used for frontend API routing.
+ *
+ * Frontend routing is handled by:
+ *  - Development: Vite proxy (vite.config.ts → proxy /api → backend)
+ *  - Production:  Same-origin (Go server serves both API and frontend)
+ *
+ * To change which backend the dev frontend talks to, set VITE_BACKEND_URL
+ * or VITE_BACKEND_PORT env vars before running `npm run dev`.
+ */
+export function apiUrl(endpoint: string): string {
+  return endpoint;
+}
+
 export const API_ENDPOINTS = {
   AUTH_TELEGRAM: '/api/v1/auth/telegram',
   AUTH_ME: '/api/v1/auth/me',

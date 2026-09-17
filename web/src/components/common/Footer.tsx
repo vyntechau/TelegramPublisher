@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { API_ENDPOINTS, VYNTECH_URLS } from '../../constants';
+import { API_ENDPOINTS, VYNTECH_URLS, apiUrl } from '../../constants';
 import { useTranslation } from '../../context/LanguageContext';
 import { Github, BookOpen, Info, Sparkles } from 'lucide-react';
 
@@ -47,7 +47,7 @@ export const Footer: React.FC = () => {
           </a>
 
           <a
-            href={API_ENDPOINTS.DOCS_SCALAR}
+            href={apiUrl(API_ENDPOINTS.DOCS_SCALAR)}
             target="_blank"
             rel="noreferrer"
             className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"

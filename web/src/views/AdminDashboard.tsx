@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ADMIN_TABS, API_ENDPOINTS } from '../constants';
+import { ADMIN_TABS, API_ENDPOINTS, apiUrl } from '../constants';
 import { useTranslation } from '../context/LanguageContext';
 import { AnalyticsSummary, User, Channel, Report, SettingsMap } from '../types';
 import { AdminOverviewTab } from '../components/admin/AdminOverviewTab';
@@ -37,11 +37,11 @@ export const AdminDashboard: React.FC = () => {
 
       // Parallel fetching for performance
       const [ovResp, usrResp, chResp, repResp, stResp] = await Promise.all([
-        fetch(API_ENDPOINTS.ANALYTICS_OVERVIEW, { headers }),
-        fetch(`${API_ENDPOINTS.USERS}?limit=50`, { headers }),
-        fetch(API_ENDPOINTS.CHANNELS, { headers }),
-        fetch(API_ENDPOINTS.REPORTS, { headers }),
-        fetch(API_ENDPOINTS.SETTINGS, { headers }),
+        fetch(apiUrl(API_ENDPOINTS.ANALYTICS_OVERVIEW), { headers }),
+        fetch(apiUrl(`${API_ENDPOINTS.USERS}?limit=50`), { headers }),
+        fetch(apiUrl(API_ENDPOINTS.CHANNELS), { headers }),
+        fetch(apiUrl(API_ENDPOINTS.REPORTS), { headers }),
+        fetch(apiUrl(API_ENDPOINTS.SETTINGS), { headers }),
       ]);
 
       if (ovResp.ok) setSummary(await ovResp.json());

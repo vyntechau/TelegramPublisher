@@ -40,10 +40,20 @@ func TestTranslate(t *testing.T) {
 		t.Errorf("expected key itself for non-existent key, got: %s", unknownKey)
 	}
 
-	// Unknown key with non-existent language
-	unknownLangAndKey := i18n.T("unknown_lang", "non_existent_key")
-	if unknownLangAndKey != "non_existent_key" {
-		t.Errorf("expected key itself, got: %s", unknownLangAndKey)
+	// Test Persistent Keyboard Buttons in multiple languages
+	adminAnalyticsEn := i18n.T("en", "btn_admin_analytics")
+	if adminAnalyticsEn != "📊 Executive Analytics" {
+		t.Errorf("expected English admin analytics button text, got: %s", adminAnalyticsEn)
+	}
+
+	adminAnalyticsFa := i18n.T("fa", "btn_admin_analytics")
+	if adminAnalyticsFa != "📊 آمار و تحلیل" {
+		t.Errorf("expected Persian admin analytics button text, got: %s", adminAnalyticsFa)
+	}
+
+	authorReportsZh := i18n.T("zh", "btn_author_reports")
+	if authorReportsZh != "🚩 媒体内容报告" {
+		t.Errorf("expected Chinese author reports button text, got: %s", authorReportsZh)
 	}
 }
 

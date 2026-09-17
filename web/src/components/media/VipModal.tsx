@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DEFAULT_VIP_PLANS, API_ENDPOINTS } from '../../constants';
+import { DEFAULT_VIP_PLANS, API_ENDPOINTS, apiUrl } from '../../constants';
 import { useTranslation } from '../../context/LanguageContext';
 import { Crown, X, Coins, ExternalLink, RefreshCw } from 'lucide-react';
 
@@ -20,7 +20,7 @@ export const VipModal: React.FC<VipModalProps> = ({ isOpen, onClose }) => {
   const handleCheckout = async () => {
     try {
       setLoading(true);
-      const resp = await fetch(API_ENDPOINTS.PAYMENTS_CHECKOUT, {
+      const resp = await fetch(apiUrl(API_ENDPOINTS.PAYMENTS_CHECKOUT), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

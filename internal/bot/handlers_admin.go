@@ -295,3 +295,29 @@ func (e *Engine) HandleSetTTL(c telebot.Context) error {
 
 	return c.Send(fmt.Sprintf("⏱️ Default copyright auto-delete TTL set to *%d seconds*.", seconds), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
+
+// HandleBotSettingsOverview returns dynamic system runtime settings overview.
+func (e *Engine) HandleBotSettingsOverview(c telebot.Context) error {
+	ctx := context.Background()
+	kbMode := e.SettingsSvc.GetString(ctx, settings.KeyKeyboardMode, "both")
+	autoDeleteSec := e.SettingsSvc.GetInt(ctx, settings.KeyAutoDeleteSeconds, 120)
+	forceSubEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyForceSubEnabled, true)
+	miniAppEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyMiniAppEnabled, true)
+	miniAppURL := e.SettingsSvc.GetString(ctx, settings.KeyMiniAppURL, "http://localhost:8080")
+	autoPostEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyAutoPostEnabled, false)
+	subEnabled := e.SettingsSvc.GetBool(ctx, settings.KeySubscriptionEnabled, true)
+	gateway := e.SettingsSvc.GetString(ctx, settings.KeySubscriptionGateway, "azpays")
+
+	overview := fmt.Sprintf("⚙️ *Bot Runtime Settings & Config*\n\n"+
+		"• *Keyboard Layout Mode*: `%s`\n"+
+		"• *Auto-Delete TTL*: `%d seconds`\n"+
+		"• *Force Channel Sub Gate*: `%t`\n"+
+		"• *Mini App Web Player*: `%t` (`%s`)\n"+
+		"• *Auto-Posting Channels*: `%t`\n"+
+		"• *Crypto VIP Gateways*: `%t` (`%s`)\n\n"+
+		"_To modify keys, update settings from the Web Dashboard._",
+		kbMode, autoDeleteSec, forceSubEnabled, miniAppEnabled, miniAppURL, autoPostEnabled, subEnabled, gateway)
+
+	return c.Send(overview, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+}
+

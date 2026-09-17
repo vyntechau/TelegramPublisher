@@ -6,7 +6,8 @@ import {
   API_ENDPOINTS, 
   KEYBOARD_MODES, 
   AUTO_POST_FORMATS,
-  SUBSCRIPTION_GATEWAYS
+  SUBSCRIPTION_GATEWAYS,
+  apiUrl
 } from '../constants';
 import { SettingsMap } from '../types';
 import { useLanguage, useTranslation } from '../context/LanguageContext';
@@ -53,7 +54,7 @@ export const OnboardingWizard: React.FC = () => {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const resp = await fetch(API_ENDPOINTS.SETTINGS, { headers });
+        const resp = await fetch(apiUrl(API_ENDPOINTS.SETTINGS), { headers });
         if (resp.ok) {
           const data = await resp.json();
           setSettings((prev) => ({ ...prev, ...data }));
@@ -101,7 +102,7 @@ export const OnboardingWizard: React.FC = () => {
         localStorage.setItem('tp_onboarding_completed', 'true');
       }
 
-      await fetch(API_ENDPOINTS.SETTINGS, {
+      await fetch(apiUrl(API_ENDPOINTS.SETTINGS), {
         method: 'POST',
         headers,
         body: JSON.stringify(updatedPayload),

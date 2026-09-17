@@ -168,8 +168,28 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	return nil
 }
 
-func (e *Engine) sendPersistentKeyboard(c telebot.Context) error {
+// GetUserRole returns the role string for the current user.
+func (e *Engine) GetUserRole(c telebot.Context) string {
+	if c == nil || c.Sender() == nil {
+		return storage.RoleUser
+	}
+	sender := c.Sender()
+	if sender.ID == e.Config.Bot.OwnerID && e.Config.Bot.OwnerID != 0 {
+		return storage.RoleOwner
+	}
 	ctx := context.Background()
+	user, err := e.Repo.GetUserByTelegramID(ctx, sender.ID)
+	if err == nil && user != nil && user.Role != "" {
+		return user.Role
+	}
+	return storage.RoleUser
+}
+
+func (e *Engine) getRolePersistentKeyboard(c telebot.Context) *telebot.ReplyMarkup {
+	ctx := context.Background()
+	userLang := e.GetUserLang(c)
+	role := e.GetUserRole(c)
+
 	miniAppURL := e.SettingsSvc.GetString(ctx, settings.KeyMiniAppURL, "http://localhost:8080")
 	miniAppEnabled := e.SettingsSvc.GetBool(ctx, settings.KeyMiniAppEnabled, true)
 
@@ -177,29 +197,105 @@ func (e *Engine) sendPersistentKeyboard(c telebot.Context) error {
 		ResizeKeyboard: true,
 	}
 
-	var row1 []telebot.Btn
-	if miniAppEnabled && miniAppURL != "" {
-		row1 = append(row1, replyMarkup.WebApp("🚀 Mini App", &telebot.WebApp{URL: miniAppURL}))
-	}
-	row1 = append(row1, replyMarkup.Text("💎 VIP Subscription"))
-
-	row2 := []telebot.Btn{
-		replyMarkup.Text("🚨 Report Broken"),
-		replyMarkup.Text("↗️ Share Bot"),
+	btnMiniAppText := i18n.T(userLang, "btn_mini_app")
+	if len(btnMiniAppText) > 22 {
+		btnMiniAppText = "🚀 Mini App"
 	}
 
-	row3 := []telebot.Btn{
-		replyMarkup.Text("👤 My Profile"),
-		replyMarkup.Text("ℹ️ Help"),
+	switch role {
+	case storage.RoleOwner, storage.RoleAdmin:
+		var r1 []telebot.Btn
+		if miniAppEnabled && miniAppURL != "" {
+			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
+		}
+		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_analytics")))
+
+		r2 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_broadcast")),
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_reports")),
+		}
+
+		r3 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_users")),
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_channels")),
+		}
+
+		r4 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_upload")),
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_settings")),
+		}
+
+		r5 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_my_profile")),
+			replyMarkup.Text(i18n.T(userLang, "btn_help")),
+			replyMarkup.Text(i18n.T(userLang, "btn_language")),
+		}
+
+		replyMarkup.Reply(
+			replyMarkup.Row(r1...),
+			replyMarkup.Row(r2...),
+			replyMarkup.Row(r3...),
+			replyMarkup.Row(r4...),
+			replyMarkup.Row(r5...),
+		)
+
+	case storage.RoleAuthor:
+		var r1 []telebot.Btn
+		if miniAppEnabled && miniAppURL != "" {
+			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
+		}
+		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_admin_upload")))
+
+		r2 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_author_reports")),
+			replyMarkup.Text(i18n.T(userLang, "btn_admin_analytics")),
+		}
+
+		r3 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_my_profile")),
+			replyMarkup.Text(i18n.T(userLang, "btn_help")),
+			replyMarkup.Text(i18n.T(userLang, "btn_language")),
+		}
+
+		replyMarkup.Reply(
+			replyMarkup.Row(r1...),
+			replyMarkup.Row(r2...),
+			replyMarkup.Row(r3...),
+		)
+
+	default: // Regular User
+		var r1 []telebot.Btn
+		if miniAppEnabled && miniAppURL != "" {
+			r1 = append(r1, replyMarkup.WebApp(btnMiniAppText, &telebot.WebApp{URL: miniAppURL}))
+		}
+		r1 = append(r1, replyMarkup.Text(i18n.T(userLang, "btn_vip_sub")))
+
+		r2 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_report")),
+			replyMarkup.Text(i18n.T(userLang, "btn_share")),
+		}
+
+		r3 := []telebot.Btn{
+			replyMarkup.Text(i18n.T(userLang, "btn_my_profile")),
+			replyMarkup.Text(i18n.T(userLang, "btn_help")),
+			replyMarkup.Text(i18n.T(userLang, "btn_language")),
+		}
+
+		replyMarkup.Reply(
+			replyMarkup.Row(r1...),
+			replyMarkup.Row(r2...),
+			replyMarkup.Row(r3...),
+		)
 	}
 
-	replyMarkup.Reply(
-		replyMarkup.Row(row1...),
-		replyMarkup.Row(row2...),
-		replyMarkup.Row(row3...),
-	)
+	return replyMarkup
+}
 
-	return nil
+func (e *Engine) sendPersistentKeyboard(c telebot.Context) error {
+	replyMarkup := e.getRolePersistentKeyboard(c)
+	userLang := e.GetUserLang(c)
+	prompt := fmt.Sprintf("⌨️ %s", i18n.T(userLang, "welcome_fast_delivery"))
+	return c.Send(prompt, replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (e *Engine) GetUserLang(c telebot.Context) string {
@@ -301,17 +397,7 @@ func (e *Engine) sendWelcomeMenu(c telebot.Context) error {
 	)
 
 	if kbMode == "persistent" || kbMode == "both" {
-		replyMarkup := &telebot.ReplyMarkup{ResizeKeyboard: true}
-		var r1 []telebot.Btn
-		if miniAppEnabled && miniAppURL != "" {
-			r1 = append(r1, replyMarkup.WebApp("🚀 Mini App", &telebot.WebApp{URL: miniAppURL}))
-		}
-		r1 = append(r1, replyMarkup.Text("💎 VIP Subscription"))
-		replyMarkup.Reply(
-			replyMarkup.Row(r1...),
-			replyMarkup.Row(replyMarkup.Text("🚨 Report Broken"), replyMarkup.Text("🌐 Language")),
-			replyMarkup.Row(replyMarkup.Text("👤 My Profile"), replyMarkup.Text("ℹ️ Help")),
-		)
+		replyMarkup := e.getRolePersistentKeyboard(c)
 		return c.Send(welcomeText, markup, replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	}
 

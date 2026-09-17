@@ -153,6 +153,13 @@ func (s *Server) requireRoleMiddleware(allowedRoles ...string) func(http.Handler
 func (s *Server) requireRoleOrOnboardingMiddleware(allowedRoles ...string) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
 			ctx := r.Context()
 			isCompleted := s.settingsSvc.GetBool(ctx, settings.KeyOnboardingCompleted, false)
 			if !isCompleted {
@@ -569,6 +576,13 @@ func (s *Server) handleUserByID(w http.ResponseWriter, r *http.Request) {
 
 // Settings
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:

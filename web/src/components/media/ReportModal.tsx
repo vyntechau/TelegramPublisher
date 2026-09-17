@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { AlertTriangle, CheckCircle2, X, Send } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -22,7 +22,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ postId, isOpen, onClos
     e.preventDefault();
     try {
       setLoading(true);
-      await fetch(API_ENDPOINTS.REPORTS, {
+      await fetch(apiUrl(API_ENDPOINTS.REPORTS), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

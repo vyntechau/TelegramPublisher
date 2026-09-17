@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SettingsMap, KeyboardMode, AutoPostFormat, SubscriptionGateway } from '../../types';
-import { KEYBOARD_MODES, AUTO_POST_FORMATS, SUBSCRIPTION_GATEWAYS, API_ENDPOINTS } from '../../constants';
+import { KEYBOARD_MODES, AUTO_POST_FORMATS, SUBSCRIPTION_GATEWAYS, API_ENDPOINTS, apiUrl } from '../../constants';
 import { useLanguage, useTranslation } from '../../context/LanguageContext';
 import { ALL_LANGUAGES } from '../../locales';
 import { Settings, Save, CheckCircle2, Shield, Radio, Coins, RefreshCw, Send, Layers, ExternalLink, Globe, Check } from 'lucide-react';
@@ -16,6 +16,12 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ settings: in
   const [savedSuccess, setSavedSuccess] = useState(false);
   const { language, setLanguage, defaultLanguage, setDefaultLanguage, setSupportedLanguagesCSV } = useLanguage();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    if (initialSettings && Object.keys(initialSettings).length > 0) {
+      setFormData(initialSettings);
+    }
+  }, [initialSettings]);
 
   const handleChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -41,7 +47,7 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ settings: in
     e.preventDefault();
     try {
       setSaving(true);
-      await fetch(API_ENDPOINTS.SETTINGS, {
+      await fetch(apiUrl(API_ENDPOINTS.SETTINGS), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +191,31 @@ export const AdminSettingsTab: React.FC<AdminSettingsTabProps> = ({ settings: in
         <div className="liquid-glass-card p-5 sm:p-6 rounded-3xl space-y-4">
           <div className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
             <Shield size={14} className="text-cyan-400" />
-            <span>{t('settings.media_sec_title', 'General & Copyright Security')}</span>
+            <span>{t('settings.media_sec_title', 'General & API Security Settings')}</span>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">{t('onboarding.api_url_label', 'REST API Base URL')}</label>
+            <input
+              type="url"
+              value={formData.api_url ?? ''}
+              onChange={(e) => handleChange('api_url', e.target.value)}
+              placeholder="http://localhost:8080"
+              className="liquid-input w-full px-3.5 py-2.5 rounded-xl text-xs font-mono text-white"
+            />
+            <p className="text-[10px] text-slate-400">Public API base URL configured during wizard setup for backend endpoints & webhooks.</p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">Telegram Mini App Web URL</label>
+            <input
+              type="url"
+              value={formData.mini_app_url ?? ''}
+              onChange={(e) => handleChange('mini_app_url', e.target.value)}
+              placeholder="http://localhost:8080"
+              className="liquid-input w-full px-3.5 py-2.5 rounded-xl text-xs font-mono text-white"
+            />
+            <p className="text-[10px] text-slate-400">URL opened when users click Telegram WebApp buttons inside bot chats.</p>
           </div>
 
           <div className="space-y-1.5">

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../../types';
-import { API_ENDPOINTS } from '../../constants';
+import { API_ENDPOINTS, apiUrl } from '../../constants';
 import { RefreshCw } from 'lucide-react';
 import { useTranslation } from '../../context/LanguageContext';
 
@@ -17,7 +17,7 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ users, total, onRe
   const handleRoleChange = async (telegramId: number, newRole: UserRole) => {
     try {
       setUpdatingId(telegramId);
-      await fetch(`${API_ENDPOINTS.USERS}/${telegramId}`, {
+      await fetch(apiUrl(`${API_ENDPOINTS.USERS}/${telegramId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export const AdminUsersTab: React.FC<AdminUsersTabProps> = ({ users, total, onRe
   const handleStatusChange = async (telegramId: number, newStatus: string) => {
     try {
       setUpdatingId(telegramId);
-      await fetch(`${API_ENDPOINTS.USERS}/${telegramId}`, {
+      await fetch(apiUrl(`${API_ENDPOINTS.USERS}/${telegramId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

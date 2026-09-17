@@ -42,7 +42,8 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	// 2. Fetch Post by Slug
 	post, err := e.Repo.GetPostBySlug(ctx, slug)
 	if err != nil {
-		return c.Send("❌ *Post Not Found*: The requested media link is invalid or has expired.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		userLang := e.GetUserLang(c)
+		return c.Send(i18n.T(userLang, "post_not_found"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	}
 
 	// 3. Track View
@@ -56,6 +57,8 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	// 4. Check if user has active VIP pass (VIP users bypass auto-delete countdown)
 	sub, _ := e.Repo.GetActiveSubscription(ctx, sender.ID)
 	isVIP := sub != nil && (sub.Tier == "vip" || sub.Tier == "lifetime")
+
+	userLang := e.GetUserLang(c)
 
 	// 5. Build Dynamic Post Buttons (Inline Keyboard & Persistent Layout)
 	kbMode := strings.ToLower(e.SettingsSvc.GetString(ctx, settings.KeyKeyboardMode, "both"))
@@ -81,7 +84,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 		// Row 2: Action Buttons (Report Broken & Forward / Share)
 		var actionBtns []telebot.Btn
 		if showReport {
-			btnReport := inlineMarkup.Data("🚨 Report Broken", "report_broken", fmt.Sprintf("%d", post.ID))
+			btnReport := inlineMarkup.Data(i18n.T(userLang, "btn_report"), "report_broken", fmt.Sprintf("%d", post.ID))
 			actionBtns = append(actionBtns, btnReport)
 		}
 		if showForward {
@@ -90,7 +93,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 				botUsername = e.Bot.Me.Username
 			}
 			shareURL := fmt.Sprintf("https://t.me/share/url?url=https://t.me/%s?start=%s&text=Check+out+this+media+on+TelegramPublisher!", botUsername, post.Slug)
-			btnShare := inlineMarkup.URL("↗️ Forward / Share", shareURL)
+			btnShare := inlineMarkup.URL(i18n.T(userLang, "btn_share"), shareURL)
 			actionBtns = append(actionBtns, btnShare)
 		}
 		if len(actionBtns) > 0 {
@@ -99,7 +102,7 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 
 		// Row 3: Open in Mini App
 		if showMiniApp && miniAppEnabled && miniAppURL != "" {
-			btnMiniApp := inlineMarkup.WebApp("🚀 Open in Mini App", &telebot.WebApp{URL: miniAppURL})
+			btnMiniApp := inlineMarkup.WebApp(i18n.T(userLang, "btn_mini_app"), &telebot.WebApp{URL: miniAppURL})
 			inlineRows = append(inlineRows, inlineMarkup.Row(btnMiniApp))
 		}
 
@@ -156,8 +159,13 @@ func (e *Engine) DeliverPost(c telebot.Context, sender *telebot.User, slug strin
 	}
 
 	if !isVIP && ttl > 0 {
-		warningText := e.SettingsSvc.GetString(ctx, settings.KeyCopyrightWarningText, "⏳ *Copyright Protection*: This content will be automatically deleted in 2 minutes.")
-		timerMsg, err := e.Bot.Send(c.Chat(), fmt.Sprintf("%s\n⏱️ Auto-delete in *%d seconds*.", warningText, ttl), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		warningText := e.SettingsSvc.GetString(ctx, settings.KeyCopyrightWarningText, "")
+		countdown := i18n.T(userLang, "timer_countdown", ttl)
+		fullWarning := countdown
+		if warningText != "" {
+			fullWarning = fmt.Sprintf("%s\n%s", warningText, countdown)
+		}
+		timerMsg, err := e.Bot.Send(c.Chat(), fullWarning, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		if err == nil && timerMsg != nil {
 			e.Cleaner.Schedule(c.Chat().ID, []int{sentMsg.ID, timerMsg.ID}, time.Duration(ttl)*time.Second)
 		} else {
@@ -299,35 +307,39 @@ func (e *Engine) sendPersistentKeyboard(c telebot.Context) error {
 }
 
 func (e *Engine) GetUserLang(c telebot.Context) string {
-	if c == nil || c.Sender() == nil {
-		return e.SettingsSvc.GetString(context.Background(), settings.KeyDefaultLanguage, "en")
-	}
-
-	// 1. Check in-memory session override
-	if val, ok := e.userLangs.Load(c.Sender().ID); ok {
-		if langStr, valid := val.(string); valid && langStr != "" {
-			return langStr
-		}
-	}
-
 	ctx := context.Background()
 	defaultLang := e.SettingsSvc.GetString(ctx, settings.KeyDefaultLanguage, "en")
 	supportedCSV := e.SettingsSvc.GetString(ctx, settings.KeySupportedLanguages, "en,fa,ar,ru,es,de,zh")
 	supported := i18n.FilterSupported(supportedCSV)
 
-	// 2. Check sender Telegram language code if supported
-	if c.Sender().LanguageCode != "" {
-		code := strings.ToLower(c.Sender().LanguageCode)
-		if len(code) > 2 {
-			code = code[:2]
+	// Ensure defaultLang is active among supported languages
+	isDefaultSupported := false
+	for _, s := range supported {
+		if s.Code == defaultLang {
+			isDefaultSupported = true
+			break
 		}
-		for _, s := range supported {
-			if s.Code == code {
-				return code
+	}
+	if !isDefaultSupported && len(supported) > 0 {
+		defaultLang = supported[0].Code
+	}
+
+	if c == nil || c.Sender() == nil {
+		return defaultLang
+	}
+
+	// 1. Check user's manual in-memory session override (via /lang or /language)
+	if val, ok := e.userLangs.Load(c.Sender().ID); ok {
+		if langStr, valid := val.(string); valid && langStr != "" {
+			for _, s := range supported {
+				if s.Code == langStr {
+					return langStr
+				}
 			}
 		}
 	}
 
+	// 2. Default to platform system default language
 	return defaultLang
 }
 
@@ -417,25 +429,32 @@ func (e *Engine) HandleHelp(c telebot.Context) error {
 
 func (e *Engine) HandleMyStatus(c telebot.Context) error {
 	ctx := context.Background()
+	userLang := e.GetUserLang(c)
 	user, err := e.Repo.GetUserByTelegramID(ctx, c.Sender().ID)
 	if err != nil {
 		return c.Send("Could not retrieve user status.")
 	}
 
 	sub, _ := e.Repo.GetActiveSubscription(ctx, c.Sender().ID)
-	vipStatus := "None (Free Tier)"
+	vipStatus := i18n.T(userLang, "profile_free_tier")
 	if sub != nil {
-		vipStatus = fmt.Sprintf("Active *%s* (Expires %s)", sub.Tier, sub.ExpiresAt.Format("2006-01-02 15:04"))
+		vipStatus = i18n.T(userLang, "profile_active_vip", sub.Tier, sub.ExpiresAt.Format("2006-01-02 15:04"))
 	}
 
-	text := fmt.Sprintf("👤 *User Profile*\n\n"+
-		"• *Telegram ID*: `%d`\n"+
-		"• *Username*: @%s\n"+
-		"• *Role*: `%s`\n"+
-		"• *Status*: `%s`\n"+
-		"• *VIP Subscription*: %s\n"+
-		"• *Member Since*: %s",
-		user.TelegramID, user.Username, user.Role, user.Status, vipStatus, user.CreatedAt.Format("2006-01-02"))
+	text := fmt.Sprintf("%s\n\n"+
+		"• *%s*: `%d`\n"+
+		"• *%s*: @%s\n"+
+		"• *%s*: `%s`\n"+
+		"• *%s*: `%s`\n"+
+		"• *%s*: %s\n"+
+		"• *%s*: %s",
+		i18n.T(userLang, "profile_title"),
+		i18n.T(userLang, "profile_tg_id"), user.TelegramID,
+		i18n.T(userLang, "profile_username"), user.Username,
+		i18n.T(userLang, "profile_role"), user.Role,
+		i18n.T(userLang, "profile_status"), user.Status,
+		i18n.T(userLang, "profile_vip_sub"), vipStatus,
+		i18n.T(userLang, "profile_member_since"), user.CreatedAt.Format("2006-01-02"))
 
 	return c.Send(text, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
 	"gopkg.in/telebot.v3"
@@ -40,7 +41,8 @@ func (e *Engine) UserMiddleware(next telebot.HandlerFunc) telebot.HandlerFunc {
 		} else {
 			// Check if banned
 			if existing.Status == storage.StatusBanned {
-				return c.Send("⛔ *Access Denied*: Your account has been suspended by administrators.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+				userLang := e.GetUserLang(c)
+				return c.Send(i18n.T(userLang, "err_banned"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 			}
 
 			// If owner role needs sync
@@ -84,7 +86,8 @@ func (e *Engine) AdminOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 
 		user, err := e.Repo.GetUserByTelegramID(ctx, sender.ID)
 		if err != nil || (user.Role != storage.RoleAdmin && user.Role != storage.RoleOwner) {
-			return c.Send("⛔ *Unauthorized*: This command is restricted to administrators.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			userLang := e.GetUserLang(c)
+			return c.Send(i18n.T(userLang, "err_unauthorized"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		}
 
 		return next(c)
@@ -111,7 +114,8 @@ func (e *Engine) AuthorOnly(next telebot.HandlerFunc) telebot.HandlerFunc {
 			if sub != nil && (sub.Tier == "author_pro" || sub.Tier == "lifetime") {
 				return next(c)
 			}
-			return c.Send("🔒 *Author Access Required*: Only designated publishers and admins can upload media or inspect File IDs.\n\nUse `/subscribe` to unlock Author Pro capabilities.", &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+			userLang := e.GetUserLang(c)
+			return c.Send(i18n.T(userLang, "err_author_required"), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 		}
 
 		return next(c)

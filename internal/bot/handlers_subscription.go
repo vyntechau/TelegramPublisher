@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/services/payment"
 	"gopkg.in/telebot.v3"
 )
 
 // HandleSubscribe presents available VIP subscription tiers.
 func (e *Engine) HandleSubscribe(c telebot.Context) error {
+	userLang := e.GetUserLang(c)
 	markup := &telebot.ReplyMarkup{}
 	var rows []telebot.Row
 
@@ -21,17 +23,17 @@ func (e *Engine) HandleSubscribe(c telebot.Context) error {
 
 	markup.Inline(rows...)
 
-	text := "💎 *VIP Subscription Passes (AZPays Crypto Checkout)*\n\n" +
-		"Upgrade your experience to enjoy premium benefits:\n" +
-		"• ⚡ *No 2-Minute Auto-Delete*: Keep all requested files in your chat permanently\n" +
-		"• 🚀 *High-Speed Streaming & Direct Downloads*\n" +
-		"• 👑 *Author Pro Privileges*: Upload & publish your own content\n\n" +
-		"Select a subscription tier below to proceed with instant crypto checkout:"
+	text := fmt.Sprintf("%s\n\n%s\n\n%s",
+		i18n.T(userLang, "sub_title"),
+		i18n.T(userLang, "sub_benefits"),
+		i18n.T(userLang, "sub_select_plan"),
+	)
 
 	return c.Send(text, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (e *Engine) handleBuyPlanCallback(c telebot.Context, parts []string) error {
+	userLang := e.GetUserLang(c)
 	if len(parts) < 2 {
 		return c.Respond(&telebot.CallbackResponse{Text: "Invalid plan"})
 	}
@@ -44,15 +46,19 @@ func (e *Engine) handleBuyPlanCallback(c telebot.Context, parts []string) error 
 	}
 
 	markup := &telebot.ReplyMarkup{}
-	btnPay := markup.URL(fmt.Sprintf("💳 Pay $%.2f (USDT / Crypto)", invoice.Amount), invoice.PaymentURL)
+	btnPay := markup.URL(i18n.T(userLang, "btn_pay_crypto", invoice.Amount), invoice.PaymentURL)
 	markup.Inline(markup.Row(btnPay))
 
-	msg := fmt.Sprintf("🧾 *Invoice Generated*\n\n"+
-		"• *Invoice ID*: `%s`\n"+
-		"• *Amount*: `$%.2f USDT`\n"+
-		"• *Expires*: `%s`\n\n"+
-		"Click the button below to complete payment on AZPays. Your VIP pass will be activated automatically once the transaction is confirmed.",
-		invoice.InvoiceID, invoice.Amount, invoice.ExpiresAt.Format("2006-01-02 15:04"))
+	msg := fmt.Sprintf("%s\n\n"+
+		"• *%s*: `%s`\n"+
+		"• *%s*: `$%.2f USDT`\n"+
+		"• *%s*: `%s`\n\n"+
+		"%s",
+		i18n.T(userLang, "invoice_title"),
+		i18n.T(userLang, "invoice_id_label"), invoice.InvoiceID,
+		i18n.T(userLang, "invoice_amount_label"), invoice.Amount,
+		i18n.T(userLang, "invoice_expires_label"), invoice.ExpiresAt.Format("2006-01-02 15:04"),
+		i18n.T(userLang, "invoice_desc"))
 
 	return c.Send(msg, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }

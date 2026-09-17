@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/vyntechau/TelegramPublisher/internal/i18n"
+	"github.com/vyntechau/TelegramPublisher/internal/services/settings"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
 	"gopkg.in/telebot.v3"
 )
@@ -22,7 +23,13 @@ func (e *Engine) HandleCallbackQuery(c telebot.Context) error {
 		langCode := strings.TrimPrefix(action, "setlang_")
 		e.userLangs.Store(c.Sender().ID, langCode)
 		langMeta := i18n.GetLanguageMeta(langCode)
-		c.Respond(&telebot.CallbackResponse{Text: fmt.Sprintf("Language: %s", langMeta.NativeName)})
+		_ = c.Respond(&telebot.CallbackResponse{Text: fmt.Sprintf("Language: %s", langMeta.NativeName)})
+
+		kbMode := strings.ToLower(e.SettingsSvc.GetString(context.Background(), settings.KeyKeyboardMode, "both"))
+		if kbMode == "persistent" || kbMode == "both" {
+			replyMarkup := e.getRolePersistentKeyboard(c)
+			return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), replyMarkup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+		}
 		return c.Send(fmt.Sprintf(i18n.T(langCode, "lang_changed"), langMeta.NativeName), &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 	case action == "cmd_language":
 		return e.HandleLanguage(c)
@@ -97,12 +104,13 @@ func (e *Engine) handleReportBrokenCallback(c telebot.Context, parts []string) e
 		return c.Respond(&telebot.CallbackResponse{Text: "Invalid post reference"})
 	}
 	postID := parts[1]
+	userLang := e.GetUserLang(c)
 
 	markup := &telebot.ReplyMarkup{}
-	btn1 := markup.Data("📵 Video Won't Play", "submit_report", postID, "broken_stream")
-	btn2 := markup.Data("📁 Corrupted File", "submit_report", postID, "corrupted_file")
-	btn3 := markup.Data("⚠️ Incorrect / Wrong Media", "submit_report", postID, "wrong_content")
-	btnCancel := markup.Data("✖ Cancel", "cancel_action")
+	btn1 := markup.Data(i18n.T(userLang, "report_opt_expired"), "submit_report", postID, "expired_link")
+	btn2 := markup.Data(i18n.T(userLang, "report_opt_corrupted"), "submit_report", postID, "corrupted_file")
+	btn3 := markup.Data(i18n.T(userLang, "report_opt_wrong"), "submit_report", postID, "wrong_content")
+	btnCancel := markup.Data(i18n.T(userLang, "report_opt_cancel"), "cancel_action")
 
 	markup.Inline(
 		markup.Row(btn1),
@@ -111,7 +119,7 @@ func (e *Engine) handleReportBrokenCallback(c telebot.Context, parts []string) e
 		markup.Row(btnCancel),
 	)
 
-	return c.Send("🚩 *Report Broken Content*\nPlease select the issue you encountered with this file:", markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
+	return c.Send(i18n.T(userLang, "report_title"), markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (e *Engine) handleSubmitReportReason(c telebot.Context, parts []string) error {
@@ -120,6 +128,7 @@ func (e *Engine) handleSubmitReportReason(c telebot.Context, parts []string) err
 	}
 	postID, _ := strconv.ParseInt(parts[1], 10, 64)
 	reason := parts[2]
+	userLang := e.GetUserLang(c)
 
 	ctx := context.Background()
 	sender := c.Sender()
@@ -144,7 +153,7 @@ func (e *Engine) handleSubmitReportReason(c telebot.Context, parts []string) err
 	})
 
 	_ = e.Bot.Delete(c.Callback().Message)
-	return c.Respond(&telebot.CallbackResponse{Text: "✅ Report submitted! Admins & author notified.", ShowAlert: true})
+	return c.Respond(&telebot.CallbackResponse{Text: i18n.T(userLang, "report_submitted"), ShowAlert: true})
 }
 
 func (e *Engine) handleResolveReportCallback(c telebot.Context, parts []string) error {

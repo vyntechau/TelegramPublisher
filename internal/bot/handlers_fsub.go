@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/vyntechau/TelegramPublisher/internal/i18n"
 	"github.com/vyntechau/TelegramPublisher/internal/storage"
 	"gopkg.in/telebot.v3"
 )
@@ -29,27 +30,27 @@ func (e *Engine) checkForceSub(userID int64) (bool, []*storage.Channel, error) {
 }
 
 func (e *Engine) sendForceSubGate(c telebot.Context, slug string, unjoined []*storage.Channel) error {
+	userLang := e.GetUserLang(c)
 	markup := &telebot.ReplyMarkup{}
 	var rows []telebot.Row
 
 	for i, ch := range unjoined {
-		btn := markup.URL(fmt.Sprintf("📢 Join Channel %d: %s", i+1, ch.Title), ch.InviteLink)
+		btn := markup.URL(fmt.Sprintf("%s %d: %s", i18n.T(userLang, "btn_join_channel"), i+1, ch.Title), ch.InviteLink)
 		rows = append(rows, markup.Row(btn))
 	}
 
-	btnTryAgain := markup.Data("🔄 I have joined! Unlock content", "fsub_check", slug)
+	btnTryAgain := markup.Data(i18n.T(userLang, "btn_check_membership"), "fsub_check", slug)
 	rows = append(rows, markup.Row(btnTryAgain))
 
 	markup.Inline(rows...)
 
-	msg := "🔒 *Channel Subscription Required*\n\n" +
-		"To unlock and view this media, you must join our official channel(s) first.\n" +
-		"Click the buttons below to join, then click *'I have joined'*."
+	msg := fmt.Sprintf("%s\n\n%s", i18n.T(userLang, "fsub_required"), i18n.T(userLang, "fsub_desc"))
 
 	return c.Send(msg, markup, &telebot.SendOptions{ParseMode: telebot.ModeMarkdown})
 }
 
 func (e *Engine) handleFSubCheckCallback(c telebot.Context, parts []string) error {
+	userLang := e.GetUserLang(c)
 	slug := ""
 	if len(parts) > 1 {
 		slug = strings.TrimSpace(parts[1])
@@ -58,7 +59,7 @@ func (e *Engine) handleFSubCheckCallback(c telebot.Context, parts []string) erro
 	joinedAll, unjoined, err := e.checkForceSub(c.Sender().ID)
 	if err == nil && joinedAll {
 		_ = e.Bot.Delete(c.Callback().Message)
-		_ = c.Respond(&telebot.CallbackResponse{Text: "✅ Subscription verified! Unlocking..."})
+		_ = c.Respond(&telebot.CallbackResponse{Text: i18n.T(userLang, "fsub_verified")})
 
 		// Deliver the post
 		if slug != "" {
@@ -70,13 +71,13 @@ func (e *Engine) handleFSubCheckCallback(c telebot.Context, parts []string) erro
 	markup := &telebot.ReplyMarkup{}
 	var rows []telebot.Row
 	for i, ch := range unjoined {
-		btn := markup.URL(fmt.Sprintf("📢 Join Channel %d: %s", i+1, ch.Title), ch.InviteLink)
+		btn := markup.URL(fmt.Sprintf("%s %d: %s", i18n.T(userLang, "btn_join_channel"), i+1, ch.Title), ch.InviteLink)
 		rows = append(rows, markup.Row(btn))
 	}
-	btnTryAgain := markup.Data("🔄 Try Again", "fsub_check", slug)
+	btnTryAgain := markup.Data(i18n.T(userLang, "btn_check_membership"), "fsub_check", slug)
 	rows = append(rows, markup.Row(btnTryAgain))
 	markup.Inline(rows...)
 
 	_, _ = e.Bot.EditReplyMarkup(c.Callback().Message, markup)
-	return c.Respond(&telebot.CallbackResponse{Text: "❌ You have not joined all required channels yet.", ShowAlert: true})
+	return c.Respond(&telebot.CallbackResponse{Text: i18n.T(userLang, "err_not_joined"), ShowAlert: true})
 }
